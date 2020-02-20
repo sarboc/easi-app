@@ -26,3 +26,35 @@
     }
   }
 }
+
+.easi_search-item {
+  background-color: #3d4c57;
+  box-sizing:border-box;
+  color:rgb(27, 27, 27);
+  display:list-item;
+  font-family:"Source Sans Pro Web", "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif;
+  font-feature-settings:"kern", "kern";
+  font-kerning:normal;
+  font-size:14.88px;
+  height:45px;
+  line-height:13.392px;
+  list-style-type:none;
+  margin-bottom:0px;
+  max-width:none;
+  position:relative;
+  //text-align:left;
+  text-size-adjust:100%;
+  width:88.0625px;
+  -webkit-font-smoothing:antialiased;
+
+  .easi_search-link {
+    display: block;
+    padding: 1rem;
+    border: none;
+    color: #ffffff;
+    line-height: 0.9;
+    font-weight: bold;
+    text-decoration: none;
+  }
+}
+

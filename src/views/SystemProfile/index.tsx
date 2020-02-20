@@ -4,10 +4,11 @@ import Header from 'components/Header';
 import HeaderWrapper from 'components/Header/HeaderWrapper';
 import SearchBar from 'components/shared/SearchBar';
 import SecondaryNav from 'components/shared/SecondaryNav';
+import { ShortSystem } from 'types/systems'
 import './index.scss';
 
-const mockSystems: any[] = [
-  { id: 'All', name: 'All', slug: 'all', link: '/system/all' },
+const mockSystems: ShortSystem[] = [
+  { id: 'All', name: 'All', acronym:'ALL', slug: 'all', link: '/system/all' },
   {
     id: '1',
     name: 'System1',
@@ -42,6 +43,41 @@ const mockSystems: any[] = [
     acronym: 'SYS5',
     slug: 'system5',
     link: '/system/system5'
+  },
+  {
+    id: '6',
+    name: 'System6',
+    acronym: 'SYS6',
+    slug: 'system6',
+    link: '/system/system6'
+  },
+  {
+    id: '7',
+    name: 'System7',
+    acronym: 'SYS7',
+    slug: 'system7',
+    link: '/system/system7'
+  },
+  {
+    id: '8',
+    name: 'System8',
+    acronym: 'SYS8',
+    slug: 'system8',
+    link: '/system/system8'
+  },
+  {
+    id: '9',
+    name: 'System9',
+    acronym: 'SYS9',
+    slug: 'system9',
+    link: '/system/system9'
+  },
+  {
+    id: '10',
+    name: 'System10',
+    acronym: 'SYS10',
+    slug: 'system10',
+    link: '/system/system10'
   }
 ];
 
@@ -61,6 +97,8 @@ const mockSystemSearch: any[] = [
   { name: 'Papaya', acronym: 'PAPY' },
   { name: 'Pear', acronym: 'Pear' }
 ];
+
+const searchSystem: ShortSystem = { id: '82', name: 'System82', acronym: 'SYS82', slug: 'system82', link: '/system/system82' };
 
 type SystemProfileProps = {
   match: any;
@@ -89,6 +127,7 @@ export const SystemProfile = ({ match }: SystemProfileProps) => {
             <SecondaryNav
               secondaryNavList={mockSystems.slice(0, 10)}
               activeNavItem={match.params.profileId}
+              searchSystem={searchSystem}
             />
           </HeaderWrapper>
         )}
