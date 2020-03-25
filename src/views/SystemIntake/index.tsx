@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
+import { withRouter } from 'react-router-dom';
 import { Formik, Form, FormikProps } from 'formik';
 import Header from 'components/Header';
 import Button from 'components/shared/Button';
@@ -13,12 +13,7 @@ import RequestDetails from './RequestDetails';
 import Review from './Review';
 import './index.scss';
 
-export type SystemIntakeRouterProps = {
-  profileId: string;
-};
-type SystemIntakeProps = RouteComponentProps<SystemIntakeRouterProps> & {};
-
-export const SystemIntake = ({ match }: SystemIntakeProps) => {
+export const SystemIntake = () => {
   const pages = [
     {
       type: 'FORM',
@@ -82,7 +77,7 @@ export const SystemIntake = ({ match }: SystemIntakeProps) => {
 
   return (
     <div className="system-intake">
-      <Header activeNavListItem={match.params.profileId} name="INTAKE">
+      <Header name="INTAKE">
         <div className="margin-bottom-3">
           {pageObj.type === 'FORM' && (
             <button type="button" className="easi-button__save usa-button">

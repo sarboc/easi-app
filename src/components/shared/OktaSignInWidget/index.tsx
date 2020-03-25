@@ -17,9 +17,7 @@ export default class OktaSignInWidget extends Component<
   componentDidMount() {
     this.widget = new OktaSignIn({
       baseUrl: process.env.REACT_APP_OKTA_DOMAIN,
-      authParams: {
-        pkce: true
-      },
+      authParams: { pkce: false },
       el: '#sign-in-widget'
     });
     this.widget.showSignInToGetTokens({

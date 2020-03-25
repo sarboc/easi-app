@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
-import { withAuth } from '@okta/okta-react';
+import { useOktaAuth } from '@okta/okta-react';
 import { useDispatch, useSelector } from 'react-redux';
 import Header from 'components/Header';
 import SearchBar from 'components/shared/SearchBar';
@@ -53,11 +53,10 @@ export type SystemProfileRouterProps = {
 };
 
 type SystemProfileProps = RouteComponentProps<SystemProfileRouterProps> & {
-  auth: any;
   searchResults: any;
 };
 
-export const SystemProfile = ({ match, auth }: SystemProfileProps) => {
+export const SystemProfile = ({ match }: SystemProfileProps) => {
   const onSearch = () => {};
   const getSuggestionValue = (suggestion: any): string => suggestion.name;
   const renderSuggestion = (suggestion: any): string => suggestion.name;
@@ -65,13 +64,14 @@ export const SystemProfile = ({ match, auth }: SystemProfileProps) => {
   const searchResults = useSelector(
     (state: AppState) => state.search.allSystemShorts
   );
+  const { authService } = useOktaAuth();
 
   useEffect(() => {
     const fetchSystemShorts = async (): Promise<void> => {
-      dispatch(getAllSystemShorts(await auth.getAccessToken()));
+      dispatch(getAllSystemShorts(await authService.getAccessToken()));
     };
     fetchSystemShorts();
-  }, [auth, dispatch]);
+  }, [authService, dispatch]);
 
   return (
     <div className="system-profile">
@@ -141,4 +141,4 @@ export const SystemProfile = ({ match, auth }: SystemProfileProps) => {
   );
 };
 
-export default withRouter(withAuth(SystemProfile));
+export default withRouter(SystemProfile);

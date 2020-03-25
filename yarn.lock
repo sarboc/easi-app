@@ -1357,9 +1357,9 @@
   integrity sha512-p8QcApCSyAXtlyB7p7jXkAkcTedvK9WFkmEduVA3XxQQVs3njxD9vTooFj4+AF6WNRIuGOis/utL7m0BzYkyVw==
 
 "@okta/okta-auth-js@^2.11.2":
-  version "2.13.0"
-  resolved "https://registry.yarnpkg.com/@okta/okta-auth-js/-/okta-auth-js-2.13.0.tgz#75858a644a08b080341cbf6ac86a63b23739ee58"
-  integrity sha512-0h98/ceSmcyfpK8K8pIil3e//hC5W45uBh9CwL3I0CkcxEwmfmbGE0o59hiTDKqaZh9teVT584qIVbN6k3nL6A==
+  version "2.13.2"
+  resolved "https://registry.yarnpkg.com/@okta/okta-auth-js/-/okta-auth-js-2.13.2.tgz#94cc3f9cb621fa8f2f71eecc3cb025ad805bbd0f"
+  integrity sha512-fjPZATU286/cYTMiUY0PxItrukPNa3W3cwhEPCjeHYxb4EXCt8OdmPjaoKfvERALmLEHbNGqweqalTF5Q7x3wg==
   dependencies:
     Base64 "0.3.0"
     cross-fetch "^3.0.0"
@@ -1370,20 +1370,20 @@
     tiny-emitter "1.1.0"
     xhr2 "0.1.3"
 
-"@okta/okta-react@^1.2.3":
-  version "1.4.0"
-  resolved "https://registry.yarnpkg.com/@okta/okta-react/-/okta-react-1.4.0.tgz#4c0cca469880c62c0afe2c841f53f35bbbcc88e8"
-  integrity sha512-DCLAFHvOQEYBgHhULTRS/fQtbWaD9XQKgeJF8nuxVbW1liL5Qqua44vpw9txlRB8nrkxupR8IqUIkKsEkNtHPg==
+"@okta/okta-react@^2.0.1":
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/@okta/okta-react/-/okta-react-2.0.1.tgz#390ac3083984e3c67dd0c61909bfcbc93e11bc50"
+  integrity sha512-tdZBvXdyIGSGGmTWWw/u4wY6rL5FususWCVxvS6ZLqt3WLBBaUgjRZ9HJvINOGPT/KcpPwXTtirlzToZdpMFHQ==
   dependencies:
     "@okta/configuration-validation" "^0.4.1"
     "@okta/okta-auth-js" "^2.11.2"
     babel-runtime "^6.26.0"
     prop-types "^15.5.10"
 
-"@okta/okta-signin-widget@^3.4.0":
-  version "3.7.2"
-  resolved "https://registry.yarnpkg.com/@okta/okta-signin-widget/-/okta-signin-widget-3.7.2.tgz#fbdb686b9b93849bc745f05ef0e5428349fc3b70"
-  integrity sha512-2JHfnzaXYgKFLm7cWEsqjB1/tOqubwlaO9DdH/gEDLOHX7sW8dIlZ4A0m/Lt90U6DOQiSM/6Yw/vXXWIzGcIJQ==
+"@okta/okta-signin-widget@^3.8.2":
+  version "3.8.2"
+  resolved "https://registry.yarnpkg.com/@okta/okta-signin-widget/-/okta-signin-widget-3.8.2.tgz#fca634a2e87428d24f9d200f58f13a8579f84b70"
+  integrity sha512-gMJePv91ZcJ/uvU43HywIOs7YplyRr1UU6VlH5C3LaW4AQ5Egl7FQsUYgNo3nJ2lXZ4LTXe73eKOtadFENXOFA==
   dependencies:
     babel-polyfill "^6.23.0"
     babel-runtime "^6.26.0"
@@ -1785,6 +1785,11 @@
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/@types/stack-utils/-/stack-utils-1.0.1.tgz#0a851d3bd96498fa25c33ab7278ed3bd65f06c3e"
   integrity sha512-l42BggppR6zLmpfU6fq9HEa2oGPEI8yrSPL3GITjfRInppYFahObbIQOQK3UGxEnyQpltZLaPe75046NOZQikw==
+
+"@types/text-encoding@^0.0.35":
+  version "0.0.35"
+  resolved "https://registry.yarnpkg.com/@types/text-encoding/-/text-encoding-0.0.35.tgz#6f14474e0b232bc70c59677aadc65dcc5a99c3a9"
+  integrity sha512-jfo/A88XIiAweUa8np+1mPbm3h2w0s425YrI8t3wk5QxhH6UI7w517MboNVnGDeMSuoFwA8Rwmklno+FicvV4g==
 
 "@types/yargs-parser@*":
   version "15.0.0"
@@ -10720,10 +10725,15 @@ react-fast-compare@^2.0.1:
   resolved "https://registry.yarnpkg.com/react-fast-compare/-/react-fast-compare-2.0.4.tgz#e84b4d455b0fec113e0402c329352715196f81f9"
   integrity sha512-suNP+J1VU1MWFKcyt7RtjiSWUjvidmQSlqu+eHslq+342xCbGTYmC0mEhPCOHxlW0CywylOC1u2DFAT+bv4dBw==
 
-react-is@^16.12.0, react-is@^16.6.0, react-is@^16.7.0, react-is@^16.8.1, react-is@^16.8.4, react-is@^16.8.6, react-is@^16.9.0:
+react-is@^16.12.0, react-is@^16.6.0, react-is@^16.7.0, react-is@^16.8.4, react-is@^16.8.6, react-is@^16.9.0:
   version "16.12.0"
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-16.12.0.tgz#2cc0fe0fba742d97fd527c42a13bec4eeb06241c"
   integrity sha512-rPCkf/mWBtKc97aLL9/txD8DZdemK0vkA3JMLShjlJB3Pj3s+lpf1KaBzMfQrAmhMQB0n1cU/SUGgKKBCe837Q==
+
+react-is@^16.8.1:
+  version "16.13.1"
+  resolved "https://registry.yarnpkg.com/react-is/-/react-is-16.13.1.tgz#789729a4dc36de2999dc156dd6c1d9c18cea56a4"
+  integrity sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==
 
 react-redux@^7.1.1:
   version "7.2.0"
@@ -12530,6 +12540,11 @@ test-exclude@^6.0.0:
     "@istanbuljs/schema" "^0.1.2"
     glob "^7.1.4"
     minimatch "^3.0.4"
+
+text-encoding@^0.7.0:
+  version "0.7.0"
+  resolved "https://registry.yarnpkg.com/text-encoding/-/text-encoding-0.7.0.tgz#f895e836e45990624086601798ea98e8f36ee643"
+  integrity sha512-oJQ3f1hrOnbRLOcwKz0Liq2IcrvDeZRHXhd9RgLrsT+DjWY/nty1Hi7v3dtkaEYbPYe0mUoOfzRrMwfXXwgPUA==
 
 text-table@0.2.0, text-table@^0.2.0:
   version "0.2.0"

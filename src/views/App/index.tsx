@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Switch, Route } from 'react-router-dom';
-import { SecureRoute, ImplicitCallback } from '@okta/okta-react';
+import { SecureRoute, LoginCallback } from '@okta/okta-react';
 import AuthenticationWrapper from 'views/AuthenticationWrapper';
 import Home from 'views/Home';
 import Login from 'views/Login';
@@ -41,7 +41,7 @@ class App extends React.Component<MainProps, MainState> {
                 component={SystemProfile}
               />
               <SecureRoute path="/business/new/" component={BusinessCase} />
-              <Route path="/implicit/callback" component={ImplicitCallback} />
+              <Route path="/implicit/callback" component={LoginCallback} />
             </Switch>
           </AuthenticationWrapper>
         </BrowserRouter>
