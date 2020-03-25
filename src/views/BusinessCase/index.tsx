@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
+import { withRouter } from 'react-router-dom';
 import { Formik, Form, FormikProps } from 'formik';
 
 import Header from 'components/Header';
@@ -10,12 +10,7 @@ import GeneralProjectInfo from './GeneralProjectInfo';
 import ProjectDescription from './ProjectDescription';
 import './index.scss';
 
-export type BusinessCaseRouterProps = {
-  profileId: string;
-};
-
-type BusinessCaseProps = RouteComponentProps<BusinessCaseRouterProps>;
-export const BusinessCase = ({ match }: BusinessCaseProps) => {
+export const BusinessCase = () => {
   const pages = [
     {
       type: 'FORM',
@@ -56,7 +51,7 @@ export const BusinessCase = ({ match }: BusinessCaseProps) => {
   };
   return (
     <div className="business-case">
-      <Header activeNavListItem={match.params.profileId} name="INTAKE">
+      <Header name="INTAKE">
         <div className="margin-bottom-3">
           {pageObj.type === 'FORM' && (
             <button type="button" className="easi-button__save usa-button">
