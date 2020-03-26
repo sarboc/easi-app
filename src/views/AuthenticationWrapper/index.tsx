@@ -1,5 +1,6 @@
 import React from 'react';
 import { Security } from '@okta/okta-react';
+import { detect } from 'detect-browser';
 
 // This can do anything. It doesn't have to redirect
 // It can be a pop up modal, alert message, etc.
@@ -12,6 +13,10 @@ type AuthenticationWrapperProps = {
 };
 
 const AuthenticationWrapper = ({ children }: AuthenticationWrapperProps) => {
+  const browser: any = detect();
+  const enablePkce =
+    process.env.REACT_APP_ENVIRONMENT !== 'local' ||
+    (browser && browser.name !== 'ie');
   return (
     <Security
       issuer={process.env.REACT_APP_OKTA_ISSUER}
@@ -19,7 +24,7 @@ const AuthenticationWrapper = ({ children }: AuthenticationWrapperProps) => {
       redirectUri={process.env.REACT_APP_OKTA_REDIRECT_URI}
       onAuthRequired={onAuthRequired}
       responseType={['code']}
-      pkce={false}
+      pkce={enablePkce}
     >
       {children}
     </Security>

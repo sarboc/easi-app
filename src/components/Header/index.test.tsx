@@ -2,53 +2,64 @@ import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { shallow, mount } from 'enzyme';
 import { act } from 'react-dom/test-utils';
+import AuthenticationWrapper from 'views/AuthenticationWrapper';
 
 import { Header } from './index';
 
 describe('The Header component', () => {
-  jest.mock('@okta/okta-react', () => {
-    console.log('am i executed');
-    return {
-      useOktaAuth: () => ({
-        authState: {},
-        authService: {}
-      })
-    };
-  });
-
-  xit('renders without crashing', () => {
-    shallow(<Header />);
+  it('renders without crashing', () => {
+    shallow(
+      <BrowserRouter>
+        <AuthenticationWrapper>
+          <Header />
+        </AuthenticationWrapper>
+      </BrowserRouter>
+    );
   });
 
   describe('When logged out', () => {
-    const auth = {
-      isAuthenticated: () => Promise.resolve(false),
-      user: {
-        name: ''
-      }
-    };
-    xit('displays a login button', () => {
-      const component = shallow(<Header auth={auth} />);
-      expect(component.text().includes('Login')).toBe(true);
-      expect(component.text().includes('Logout')).toBe(false);
+    it('displays a login button', async done => {
+      let component: any;
+      await act(async () => {
+        component = mount(
+          <BrowserRouter>
+            <AuthenticationWrapper>
+              <Header />
+            </AuthenticationWrapper>
+          </BrowserRouter>
+        );
+      });
+      setImmediate(() => {
+        component.update();
+        expect(component.text().includes('Login')).toBe(true);
+        expect(component.text().includes('Logout')).toBe(false);
+        done();
+      });
     });
   });
 
   describe('When logged in', () => {
-    const auth = {
-      isAuthenticated: () => Promise.resolve(true),
-      getUser: () =>
-        Promise.resolve({
-          name: 'John Doe'
-        })
-    };
+    jest.mock('@okta/okta-react', () => ({
+      useOktaAuth: () => {
+        return {
+          authState: { isAuthenticated: true },
+          authService: {
+            getUser: () => ({
+              name: 'hellloooo'
+            })
+          }
+        };
+      }
+    }));
 
     xit('displays a login button', async done => {
-      let component;
+      let component: any;
       await act(async () => {
         component = mount(
           <BrowserRouter>
-            <Header auth={auth} />
+            <AuthenticationWrapper>
+              <Header />
+            </AuthenticationWrapper>
           </BrowserRouter>
         );
       });
@@ -67,7 +78,7 @@ describe('The Header component', () => {
       await act(async () => {
         component = mount(
           <BrowserRouter>
-            <Header auth={auth} />
+            <Header />
           </BrowserRouter>
         );
       });
@@ -85,7 +96,7 @@ describe('The Header component', () => {
       await act(async () => {
         component = mount(
           <BrowserRouter>
-            <Header auth={auth} />
+            <Header />
           </BrowserRouter>
         );
       });
@@ -100,20 +111,25 @@ describe('The Header component', () => {
     });
   });
 
-  xit('displays children', () => {
-    const auth = {
-      isAuthenticated: () => Promise.resolve(true),
-      user: {
-        name: ''
-      }
-    };
+  it('displays children', async done => {
+    let component: any;
 
-    const component = shallow(
-      <Header auth={auth}>
-        <div className="test-class-name" />
-      </Header>
-    );
+    await act(async () => {
+      component = mount(
+        <BrowserRouter>
+          <AuthenticationWrapper>
+            <Header>
+              <div className="test-class-name" />
+            </Header>
+          </AuthenticationWrapper>
+        </BrowserRouter>
+      );
+    });
 
-    expect(component.find('.test-class-name').exists()).toBe(true);
+    setImmediate(() => {
+      component.update();
+      expect(component.find('.test-class-name').exists()).toBe(true);
+      done();
+    });
   });
 });

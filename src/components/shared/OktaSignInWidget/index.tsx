@@ -2,6 +2,7 @@
 
 import React, { Component } from 'react';
 import OktaSignIn from '@okta/okta-signin-widget/dist/js/okta-sign-in.min';
+import { detect } from 'detect-browser';
 
 type OktaSignInWidgetProps = {
   onSuccess: (auth: any) => any;
@@ -17,7 +18,7 @@ export default class OktaSignInWidget extends Component<
   componentDidMount() {
     this.widget = new OktaSignIn({
       baseUrl: process.env.REACT_APP_OKTA_DOMAIN,
-      authParams: { pkce: false },
+      authParams: { pkce: this.enablePkce() },
       el: '#sign-in-widget'
     });
     this.widget.showSignInToGetTokens({
@@ -31,6 +32,14 @@ export default class OktaSignInWidget extends Component<
   componentWillUnmount() {
     this.widget.remove();
   }
+
+  enablePkce = () => {
+    const browser: any = detect();
+
+    return (
+      process.env.REACT_APP_ENVIRONMENT !== 'local' || browser.name !== 'ie'
+    );
+  };
 
   render() {
     return (
