@@ -8,7 +8,7 @@ import (
 	"github.com/cmsgov/easi-app/pkg/testhelpers"
 )
 
-func newEstimatedLifecycleCost(businessCaseID uuid.UUID) models.EstimatedLifecycleCost {
+func NewEstimatedLifecycleCost(businessCaseID uuid.UUID) models.EstimatedLifecycleCost {
 	return models.EstimatedLifecycleCost{
 		ID:             uuid.New(),
 		BusinessCaseID: businessCaseID,
@@ -56,8 +56,13 @@ func newBusinessCase() models.BusinessCase {
 		AlternativeBCons:                null.StringFrom("Test Alternative B Cons"),
 		AlternativeBCostSavings:         null.StringFrom("Test Alternative B Cost Savings"),
 		LifecycleCostLines: models.EstimatedLifecycleCosts{
+<<<<<<< HEAD
 			newEstimatedLifecycleCost(businessCaseID),
 			newEstimatedLifecycleCost(businessCaseID),
+=======
+			NewEstimatedLifecycleCost(businessCaseID),
+			NewEstimatedLifecycleCost(businessCaseID),
+>>>>>>> Add storage tests
 		},
 	}
 }
