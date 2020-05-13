@@ -26,7 +26,7 @@ class App extends React.Component<MainProps, MainState> {
             <Switch>
               <Route path="/" exact component={Home} />
               <Route path="/login" exact component={Login} />
-              <Route path="/sandbox" exact component={Sandbox} />
+              <SecureRoute path="/sandbox" exact component={Sandbox} />
               <SecureRoute
                 exact
                 path="/system/:systemId/grt-review"
