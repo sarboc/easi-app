@@ -1,25 +1,29 @@
 import React from 'react';
 import Header from 'components/Header';
 import { useOktaAuth } from '@okta/okta-react';
+import { DateTime } from 'luxon';
 import ActionBanner from '../../components/shared/ActionBanner/index';
 
 // This view can be deleted whenever we're ready
 // This is just a sandbox page for us to test things out
 
-const onButtonClick = (authState: any, authService: any) => {
-  const tokenManager = authService.getTokenManager();
-  tokenManager.get('idToken').then((token: any) => {
-    console.log('token', token)
-  })
-  console.log('authState', authState);
-  alert(`I WAS CLICKED!`);
-  return null
+const onButtonClick = async (authService: any) => {
+  console.log('Fetching current token')
+  const tokenManager = await authService.getTokenManager();
+  const token = await tokenManager.get('idToken');
+  const { expiresAt }: { expiresAt: number } = token;
+  const expirationDate = DateTime.fromSeconds(expiresAt).toLocaleString(DateTime.DATETIME_FULL);
+  console.log('expirationDate ', expirationDate);
+
+  console.log('Renewing token')
+  const newToken = await tokenManager.renew('idToken')
+  const { expiresAt: newExpiresAt }: { expiresAt: number } = newToken;
+  const newExpirationDate = DateTime.fromSeconds(newExpiresAt).toLocaleString(DateTime.DATETIME_FULL);
+  console.log('newExpirationDate ', newExpirationDate);
 }
 
 const Sandbox = () => {
-  console.log(useOktaAuth);
-
-  const { authState, authService }: { authState: object, authService: any } = useOktaAuth();
+  const { authService}: { authService: any } = useOktaAuth();
 
   return (
     <div>
@@ -30,7 +34,7 @@ const Sandbox = () => {
             title="thing"
             helpfulText="lots of helpful text"
             label="I am a button"
-            onClick={() => onButtonClick(authState, authService)}
+            onClick={() => onButtonClick(authService)}
           />
       </div>
     </div>
