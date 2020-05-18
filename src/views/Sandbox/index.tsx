@@ -10,13 +10,18 @@ import ActionBanner from '../../components/shared/ActionBanner/index';
 const onButtonClick = async (authService: any) => {
   console.log('Fetching current token')
   const tokenManager = await authService.getTokenManager();
-  const token = await tokenManager.get('idToken');
+  // const sessionToken = tokenManager.get('sessionToken');
+  // console.log(sessionToken)
+  const idToken = await tokenManager.get('idToken');
+  console.log(idToken)
+  const token = await tokenManager.get('accessToken');
+  console.log(token)
   const { expiresAt }: { expiresAt: number } = token;
   const expirationDate = DateTime.fromSeconds(expiresAt).toLocaleString(DateTime.DATETIME_FULL);
   console.log('expirationDate ', expirationDate);
 
   console.log('Renewing token')
-  const newToken = await tokenManager.renew('idToken')
+  const newToken = await tokenManager.renew('accessToken')
   const { expiresAt: newExpiresAt }: { expiresAt: number } = newToken;
   const newExpirationDate = DateTime.fromSeconds(newExpiresAt).toLocaleString(DateTime.DATETIME_FULL);
   console.log('newExpirationDate ', newExpirationDate);

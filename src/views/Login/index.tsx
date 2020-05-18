@@ -13,6 +13,7 @@ const Login = () => {
         onSuccess={response => {
           authService.getTokenManager().then((tokenManager: any) => {
             tokenManager.add('idToken', response)
+            tokenManager.add('accessToken', response)
           })
         }}
         onError={() => {
