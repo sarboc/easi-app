@@ -2,38 +2,47 @@ import React from 'react';
 import Header from 'components/Header';
 import { useOktaAuth } from '@okta/okta-react';
 import { DateTime } from 'luxon';
-import ActionBanner from '../../components/shared/ActionBanner/index';
-import { useDispatch, useSelector } from 'react-redux';
-import { AppState } from 'reducers/rootReducer';
+import { useDispatch } from 'react-redux';
 import { updateLastActiveAt } from 'reducers/authReducer';
+import ActionBanner from '../../components/shared/ActionBanner/index';
 
 // This view can be deleted whenever we're ready
 // This is just a sandbox page for us to test things out
 const shortenTimeout = async (authService: any) => {
   const tokenManager = await authService.getTokenManager();
-  // const sessionToken = tokenManager.get('sessionToken');
-  // console.log(sessionToken)
   const idToken = await tokenManager.get('idToken');
-  const newIdToken = {...idToken, expiresAt: Math.round(DateTime.local().plus({minutes: 1}).toSeconds())}
-  tokenManager.add('idToken', newIdToken)
+  const newIdToken = {
+    ...idToken,
+    expiresAt: Math.round(
+      DateTime.local()
+        .plus({ minutes: 1 })
+        .toSeconds()
+    )
+  };
+  tokenManager.add('idToken', newIdToken);
 
   const accessToken = await tokenManager.get('accessToken');
-  const newAccessToken = {...accessToken, expiresAt: Math.round(DateTime.local().plus({minutes: 1}).toSeconds())}
-  tokenManager.add('accessToken', newAccessToken)
+  const newAccessToken = {
+    ...accessToken,
+    expiresAt: Math.round(
+      DateTime.local()
+        .plus({ minutes: 1 })
+        .toSeconds()
+    )
+  };
+  tokenManager.add('accessToken', newAccessToken);
 
-  console.log('I shortened the thing')
-}
+  console.log('I shortened the thing');
+};
 
 const logInfo = async (authService: any) => {
   const tokenManager = await authService.getTokenManager();
-  // const sessionToken = tokenManager.get('sessionToken');
-  // console.log(sessionToken)
   const idToken = await tokenManager.get('idToken');
-  console.log('idToken expires at ', idToken.expiresAt)
+  console.log('idToken expires at ', idToken.expiresAt);
 
   const accessToken = await tokenManager.get('accessToken');
-  console.log('accessToken expires at ', accessToken.expiresAt)
-}
+  console.log('accessToken expires at ', accessToken.expiresAt);
+};
 
 const Sandbox = () => {
   const { authService }: { authService: any } = useOktaAuth();
@@ -44,24 +53,24 @@ const Sandbox = () => {
       <Header />
       <div className="grid-container">
         <h1>Sandbox</h1>
-          <ActionBanner
-            title="Shorten the life of your token"
-            helpfulText="Change expiration to a minute from now"
-            label="Do iiiiiit"
-            onClick={() => shortenTimeout(authService)}
-          />
-          <ActionBanner
-            title="Learn more about your token"
-            helpfulText="Console log the current tokens"
-            label="Log the thing"
-            onClick={() => logInfo(authService)}
-          />
-          <ActionBanner
-            title="Update your last active at timestamp"
-            helpfulText="Dispatch the thing to do the thing"
-            label="Update"
-            onClick={() => dispatch(updateLastActiveAt)}
-          />
+        <ActionBanner
+          title="Shorten the life of your token"
+          helpfulText="Change expiration to a minute from now"
+          label="Do iiiiiit"
+          onClick={() => shortenTimeout(authService)}
+        />
+        <ActionBanner
+          title="Learn more about your token"
+          helpfulText="Console log the current tokens"
+          label="Log the thing"
+          onClick={() => logInfo(authService)}
+        />
+        <ActionBanner
+          title="Update your last active at timestamp"
+          helpfulText="Dispatch the thing to do the thing"
+          label="Update"
+          onClick={() => dispatch(updateLastActiveAt)}
+        />
       </div>
     </div>
   );
