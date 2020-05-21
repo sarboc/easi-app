@@ -12,9 +12,9 @@ const Login = () => {
       <OktaSignInWidget
         onSuccess={response => {
           authService.getTokenManager().then((tokenManager: any) => {
-            tokenManager.add('idToken', response)
-            tokenManager.add('accessToken', response)
-          })
+            tokenManager.add('idToken', response);
+            tokenManager.add('accessToken', response);
+          });
         }}
         onError={() => {
           console.log('error');
