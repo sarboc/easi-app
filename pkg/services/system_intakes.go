@@ -95,6 +95,80 @@ func NewAuthorizeSaveSystemIntake(logger *zap.Logger) func(
 	}
 }
 
+// NewUpdateSystemIntake is a service to update a system intake
+func NewUpdateSystemIntake(
+	config Config,
+	update func(*models.SystemIntake) error,
+	fetch func(uuid.UUID) (*models.SystemIntake, error),
+	authorize func(context.Context, *models.SystemIntake) (bool, error),
+	validateAndSubmit func(intake *models.SystemIntake, logger *zap.Logger) (string, error),
+	sendEmail func(requester string, intakeID uuid.UUID) error,
+) func(context context.Context, intake *models.SystemIntake) (*models.SystemIntake, error) {
+	return func(context context.Context, intake *models.SystemIntake) (*models.SystemIntake, error) {
+		existingIntake, err := fetch(intake.ID)
+		if err != nil {
+			return &models.SystemIntake{}, &apperrors.ResourceConflictError{
+				Err:        errors.New("system intake does not exist"),
+				Resource:   intake,
+				ResourceID: intake.ID.String(),
+			}
+		}
+		ok, err := authorize(context, existingIntake)
+		if err != nil {
+			return &models.SystemIntake{}, err
+		}
+		if !ok {
+			return &models.SystemIntake{}, &apperrors.UnauthorizedError{Err: err}
+		}
+
+		now := config.clock.Now().UTC()
+		intake.UpdatedAt = &now
+
+		if intake.Status == models.SystemIntakeStatusSUBMITTED {
+			if existingIntake.AlfabetID.Valid {
+				err := &apperrors.ResourceConflictError{
+					Err:        errors.New("intake has already been submitted to CEDAR"),
+					ResourceID: intake.ID.String(),
+					Resource:   intake,
+				}
+				return &models.SystemIntake{}, err
+			}
+
+			intake.SubmittedAt = &now
+			alfabetID, validateAndSubmitErr := validateAndSubmit(intake, config.logger)
+			if validateAndSubmitErr != nil {
+				return &models.SystemIntake{}, validateAndSubmitErr
+			}
+			if alfabetID == "" {
+				return &models.SystemIntake{}, &apperrors.ExternalAPIError{
+					Err:       errors.New("submission was not successful"),
+					Model:     intake,
+					ModelID:   intake.ID.String(),
+					Operation: apperrors.Submit,
+					Source:    "CEDAR",
+				}
+			}
+			intake.AlfabetID = null.StringFrom(alfabetID)
+		}
+		err = update(intake)
+		if err != nil {
+			return &models.SystemIntake{}, &apperrors.QueryError{
+				Err:       err,
+				Model:     intake,
+				Operation: apperrors.QuerySave,
+			}
+		}
+		// only send an email when everything went ok
+		if intake.Status == models.SystemIntakeStatusSUBMITTED {
+			err = sendEmail(intake.Requester, intake.ID)
+			if err != nil {
+				return &models.SystemIntake{}, err
+			}
+		}
+		return intake, nil
+	}
+}
+
 // NewSaveSystemIntake is a service to save the system intake
 func NewSaveSystemIntake(
 	config Config,
