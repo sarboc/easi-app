@@ -1,0 +1,10 @@
+#!/bin/sh
+#
+# entry point for the db_clean docker image
+#
+
+if flyway clean ; then
+  flyway migrate
+else
+  exit
+fi
