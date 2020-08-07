@@ -233,7 +233,8 @@ jobs:
       - run:
           name: Nuke the database
           command: |
-            ./scripts/db_lambda_invoke "easi-app-db-clean-tmp" "2" "easi-app-db-clean"
+            ./scripts/deploy_service "easi-app-db-clean" "16" "easi-db-clean"
+            ./scripts/db_lambda_invoke "dev-ecs-manager" "16" "easi-app-db-clean"
       - run:
           name: Run migrations
           command: |
