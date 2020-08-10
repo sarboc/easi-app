@@ -231,13 +231,9 @@ jobs:
             echo "export AWS_SECRET_ACCESS_KEY=$(jq --raw-output .Credentials.SecretAccessKey <<< "$temp_role")" >> $BASH_ENV
             echo "export AWS_SESSION_TOKEN=$(jq --raw-output .Credentials.SessionToken <<< "$temp_role")" >> $BASH_ENV
       - run:
-          name: Nuke the database
+          name: Clean the database & run migrations
           command: |
-            ./scripts/db_lambda_invoke "easi-app-db-clean-tmp" "2" "easi-app-db-clean"
-      - run:
-          name: Run migrations
-          command: |
-            ./scripts/deploy_service "easi-app-db-migrate" "16" "easi-db-migrate"
+            ./scripts/deploy_service "easi-app-db-migrate" "16" "easi-db-clean"
             ./scripts/db_lambda_invoke "dev-ecs-manager" "16" "easi-app-db-migrate"
       - run:
           name: Deploy ECS service
