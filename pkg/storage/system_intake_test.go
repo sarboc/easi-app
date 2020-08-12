@@ -14,6 +14,10 @@ import (
 	"github.com/cmsgov/easi-app/pkg/testhelpers"
 )
 
+const insertBasicIntakeSQL = "INSERT INTO system_intake (id, eua_user_id, status, requester) VALUES (:id, :eua_user_id, :status, :requester)"
+const insertRelatedBizCaseSQL = `INSERT INTO business_case (id, eua_user_id, status, requester, system_intake) 
+		VALUES(:id, :eua_user_id, :status, :requester, :system_intake)`
+
 func (s StoreTestSuite) TestCreateSystemIntake() {
 	s.Run("create a new system intake", func() {
 		intake := models.SystemIntake{
@@ -129,7 +133,7 @@ func (s StoreTestSuite) TestFetchSystemIntakeByID() {
 		intake := testhelpers.NewSystemIntake()
 		id := intake.ID
 		tx := s.db.MustBegin()
-		_, err := tx.NamedExec("INSERT INTO system_intake (id, eua_user_id, status, requester) VALUES (:id, :eua_user_id, :status, :requester)", &intake)
+		_, err := tx.NamedExec(insertBasicIntakeSQL, &intake)
 		s.NoError(err)
 		err = tx.Commit()
 		s.NoError(err)
@@ -149,6 +153,28 @@ func (s StoreTestSuite) TestFetchSystemIntakeByID() {
 		s.IsType(&apperrors.ResourceNotFoundError{}, err)
 		s.Equal(&models.SystemIntake{}, fetched)
 	})
+
+	s.Run("fetches biz case id if exists and intake is past draft status", func() {
+		intake := testhelpers.NewSystemIntake()
+		id := intake.ID
+		intake.Status = models.SystemIntakeStatusAPPROVED
+		bizCase := testhelpers.NewBusinessCase()
+		bizCase.SystemIntakeID = id
+
+		tx := s.db.MustBegin()
+		_, err := tx.NamedExec(insertBasicIntakeSQL, &intake)
+		s.NoError(err)
+		_, err = tx.NamedExec(insertRelatedBizCaseSQL, &bizCase)
+		s.NoError(err)
+		err = tx.Commit()
+		s.NoError(err)
+
+		fetched, err := s.store.FetchSystemIntakeByID(id)
+
+		s.NoError(err, "failed to fetch system intake")
+		s.Equal(intake.ID, fetched.ID)
+		s.Equal(&bizCase.ID, fetched.BusinessCaseID)
+	})
 }
 
 func (s StoreTestSuite) TestFetchSystemIntakesByEuaID() {
@@ -157,9 +183,9 @@ func (s StoreTestSuite) TestFetchSystemIntakesByEuaID() {
 		intake2 := testhelpers.NewSystemIntake()
 		intake2.EUAUserID = intake.EUAUserID
 		tx := s.db.MustBegin()
-		_, err := tx.NamedExec("INSERT INTO system_intake (id, eua_user_id, status, requester) VALUES (:id, :eua_user_id, :status, :requester)", &intake)
+		_, err := tx.NamedExec(insertBasicIntakeSQL, &intake)
 		s.NoError(err)
-		_, err = tx.NamedExec("INSERT INTO system_intake (id, eua_user_id, status, requester) VALUES (:id, :eua_user_id, :status, :requester)", &intake2)
+		_, err = tx.NamedExec(insertBasicIntakeSQL, &intake2)
 		s.NoError(err)
 		err = tx.Commit()
 		s.NoError(err)
@@ -177,6 +203,50 @@ func (s StoreTestSuite) TestFetchSystemIntakesByEuaID() {
 		s.NoError(err)
 		s.Len(fetched, 0)
 		s.Equal(models.SystemIntakes{}, fetched)
+	})
+
+	s.Run("fetches biz case IDs if they exist and intakes are past draft status", func() {
+		intake := testhelpers.NewSystemIntake()
+		intake2 := testhelpers.NewSystemIntake()
+		id := intake.ID
+		intake2.EUAUserID = intake.EUAUserID
+		intake.Status = models.SystemIntakeStatusAPPROVED
+		intake2.Status = models.SystemIntakeStatusSUBMITTED
+		bizCase := testhelpers.NewBusinessCase()
+		bizCase.SystemIntakeID = id
+
+		tx := s.db.MustBegin()
+		_, err := tx.NamedExec(insertBasicIntakeSQL, &intake)
+		s.NoError(err)
+		_, err = tx.NamedExec(insertBasicIntakeSQL, &intake2)
+		s.NoError(err)
+		_, err = tx.NamedExec(insertRelatedBizCaseSQL, &bizCase)
+		s.NoError(err)
+		err = tx.Commit()
+		s.NoError(err)
+
+		fetched, err := s.store.FetchSystemIntakesByEuaID(intake.EUAUserID)
+
+		s.NoError(err, "failed to fetch system intakes")
+		s.Len(fetched, 2)
+		fetchedIntakeWithBizCase := func(fetched models.SystemIntakes) models.SystemIntake {
+			for _, intake := range fetched {
+				if intake.ID == id {
+					return intake
+				}
+			}
+			return models.SystemIntake{}
+		}
+		fetchedIntakeWithoutBizCase := func(fetched models.SystemIntakes) models.SystemIntake {
+			for _, intake := range fetched {
+				if intake.ID != id {
+					return intake
+				}
+			}
+			return models.SystemIntake{}
+		}
+		s.Equal(&bizCase.ID, fetchedIntakeWithBizCase(fetched).BusinessCaseID)
+		s.Equal((*uuid.UUID)(nil), fetchedIntakeWithoutBizCase(fetched).BusinessCaseID)
 	})
 }
 
@@ -248,8 +318,10 @@ func (s StoreTestSuite) TestFetchSystemIntakeMetrics() {
 		s.Run(fmt.Sprintf("%s for completed count", tt.name), func() {
 			intake := testhelpers.NewSystemIntake()
 			settableClock.Set(tt.createdAt)
-			intake.SubmittedAt = &tt.submittedAt
 			_, err := s.store.CreateSystemIntake(&intake)
+			s.NoError(err)
+			intake.SubmittedAt = &tt.submittedAt
+			_, err = s.store.UpdateSystemIntake(&intake)
 			s.NoError(err)
 
 			metrics, err := s.store.FetchSystemIntakeMetrics(startDate, endDate)
@@ -295,9 +367,11 @@ func (s StoreTestSuite) TestFetchSystemIntakeMetrics() {
 		s.Run(tt.name, func() {
 			intake := testhelpers.NewSystemIntake()
 			settableClock.Set(tt.submittedAt)
-			intake.SubmittedAt = &tt.submittedAt
 			intake.ExistingFunding = null.BoolFrom(tt.funded)
 			_, err := s.store.CreateSystemIntake(&intake)
+			s.NoError(err)
+			intake.SubmittedAt = &tt.submittedAt
+			_, err = s.store.UpdateSystemIntake(&intake)
 			s.NoError(err)
 
 			metrics, err := s.store.FetchSystemIntakeMetrics(startDate, endDate)

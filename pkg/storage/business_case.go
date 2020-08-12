@@ -12,6 +12,18 @@ import (
 	"github.com/cmsgov/easi-app/pkg/models"
 )
 
+// IntakeExistsMsg is the error we see when there is no valid system intake
+const IntakeExistsMsg = "pq: insert or update on table \"business_case\" violates foreign key constraint \"business_case_system_intake_fkey\""
+
+// EuaIDMsg is the error we see when EUA doesn't meet EUA ID constraints
+const EuaIDMsg = "pq: new row for relation \"business_case\" violates check constraint \"eua_id_check\""
+
+// ValidStatusMsg is a match for an error we see when there is no valid status
+const ValidStatusMsg = "pq: invalid input value for enum business_case_status: "
+
+// UniqueIntakeMsg is a match for an error we see when the system intake already has a biz case
+const UniqueIntakeMsg = "pq: duplicate key value violates unique constraint \"unique_intake_per_biz_case\""
+
 // FetchBusinessCaseByID queries the DB for a business case matching the given ID
 func (s *Store) FetchBusinessCaseByID(id uuid.UUID) (*models.BusinessCase, error) {
 	businessCase := models.BusinessCase{}
@@ -38,6 +50,32 @@ func (s *Store) FetchBusinessCaseByID(id uuid.UUID) (*models.BusinessCase, error
 		return &models.BusinessCase{}, err
 	}
 	return &businessCase, nil
+}
+
+// FetchBusinessCaseIDByIntakeID queries the DB for a business case matching the given intake ID
+func (s *Store) FetchBusinessCaseIDByIntakeID(intakeID uuid.UUID) (*uuid.UUID, error) {
+	var businessCaseID *uuid.UUID = nil
+	const fetchBusinessCaseIDSQL = `
+		SELECT
+			id
+		FROM
+			business_case
+		WHERE
+			business_case.system_intake = $1`
+
+	err := s.DB.Get(&businessCaseID, fetchBusinessCaseIDSQL, intakeID)
+	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			return businessCaseID, nil
+		}
+
+		s.logger.Error(
+			fmt.Sprintf("Failed to fetch business case id for intake %s", err),
+			zap.String("System Intake", intakeID.String()),
+		)
+		return businessCaseID, err
+	}
+	return businessCaseID, nil
 }
 
 // FetchBusinessCasesByEuaID queries the DB for a list of business case matching the given EUA ID
@@ -132,18 +170,30 @@ func (s *Store) CreateBusinessCase(businessCase *models.BusinessCase) (*models.B
 			preferred_title,
 			preferred_summary,
 			preferred_acquisition_approach,
+			preferred_hosting_type,
+			preferred_hosting_location,
+			preferred_hosting_cloud_service_type,
+			preferred_has_ui,
 			preferred_pros,
 			preferred_cons,
 			preferred_cost_savings,
 			alternative_a_title,
 			alternative_a_summary,
 			alternative_a_acquisition_approach,
+			alternative_a_hosting_type,
+			alternative_a_hosting_location,
+			alternative_a_hosting_cloud_service_type,
+			alternative_a_has_ui,
 			alternative_a_pros,
 			alternative_a_cons,
 			alternative_a_cost_savings,
 			alternative_b_title,
 			alternative_b_summary,
 			alternative_b_acquisition_approach,
+			alternative_b_hosting_type,
+			alternative_b_hosting_location,
+			alternative_b_hosting_cloud_service_type,
+			alternative_b_has_ui,
 			alternative_b_pros,
 			alternative_b_cons,
 			alternative_b_cost_savings,
@@ -171,18 +221,30 @@ func (s *Store) CreateBusinessCase(businessCase *models.BusinessCase) (*models.B
 			:preferred_title,
 			:preferred_summary,
 			:preferred_acquisition_approach,
+			:preferred_hosting_type,
+			:preferred_hosting_location,
+			:preferred_hosting_cloud_service_type,
+			:preferred_has_ui,
 			:preferred_pros,
 			:preferred_cons,
 			:preferred_cost_savings,
 			:alternative_a_title,
 			:alternative_a_summary,
 			:alternative_a_acquisition_approach,
+			:alternative_a_hosting_type,
+			:alternative_a_hosting_location,
+			:alternative_a_hosting_cloud_service_type,
+			:alternative_a_has_ui,
 			:alternative_a_pros,
 			:alternative_a_cons,
 			:alternative_a_cost_savings,
 			:alternative_b_title,
 			:alternative_b_summary,
 			:alternative_b_acquisition_approach,
+			:alternative_b_hosting_type,
+			:alternative_b_hosting_location,
+			:alternative_b_hosting_cloud_service_type,
+			:alternative_b_has_ui,
 			:alternative_b_pros,
 			:alternative_b_cons,
 			:alternative_b_cost_savings,
@@ -199,10 +261,23 @@ func (s *Store) CreateBusinessCase(businessCase *models.BusinessCase) (*models.B
 			zap.String("EUAUserID", businessCase.EUAUserID),
 			zap.String("SystemIntakeID", businessCase.SystemIntakeID.String()),
 		)
+		if err.Error() == "pq: duplicate key value violates unique constraint \"unique_intake_per_biz_case\"" {
+			return &models.BusinessCase{},
+				&apperrors.ResourceConflictError{
+					Err:        err,
+					Resource:   models.BusinessCase{},
+					ResourceID: businessCase.SystemIntakeID.String(),
+				}
+		}
+		return &models.BusinessCase{}, err
 	}
-
 	err = createEstimatedLifecycleCosts(tx, businessCase, s.logger)
 	if err != nil {
+		s.logger.Error(
+			fmt.Sprintf("Failed to create business case with lifecycle costs with error %s", err),
+			zap.String("EUAUserID", businessCase.EUAUserID),
+			zap.String("BusinessCaseID", businessCase.ID.String()),
+		)
 		return &models.BusinessCase{}, err
 	}
 	err = tx.Commit()
@@ -222,7 +297,7 @@ func (s *Store) CreateBusinessCase(businessCase *models.BusinessCase) (*models.B
 func (s *Store) UpdateBusinessCase(businessCase *models.BusinessCase) (*models.BusinessCase, error) {
 	// We are explicitly not updating ID, EUAUserID and SystemIntakeID
 	const updateBusinessCaseSQL = `
-		UPDATE business_case 
+		UPDATE business_case
 		SET
 			project_name = :project_name,
 			requester = :requester,
@@ -240,18 +315,30 @@ func (s *Store) UpdateBusinessCase(businessCase *models.BusinessCase) (*models.B
 			preferred_title = :preferred_title,
 			preferred_summary = :preferred_summary,
 			preferred_acquisition_approach = :preferred_acquisition_approach,
+			preferred_hosting_type = :preferred_hosting_type,
+			preferred_hosting_location = :preferred_hosting_location,
+			preferred_hosting_cloud_service_type = :preferred_hosting_cloud_service_type,
+			preferred_has_ui = :preferred_has_ui,
 			preferred_pros = :preferred_pros,
 			preferred_cons = :preferred_cons,
 			preferred_cost_savings = :preferred_cost_savings,
 			alternative_a_title = :alternative_a_title,
 			alternative_a_summary = :alternative_a_summary,
 			alternative_a_acquisition_approach = :alternative_a_acquisition_approach,
+			alternative_a_hosting_type = :alternative_a_hosting_type,
+			alternative_a_hosting_location = :alternative_a_hosting_location,
+			alternative_a_hosting_cloud_service_type = :alternative_a_hosting_cloud_service_type,
+			alternative_a_has_ui = :alternative_a_has_ui,
 			alternative_a_pros = :alternative_a_pros,
 			alternative_a_cons = :alternative_a_cons,
 			alternative_a_cost_savings = :alternative_a_cost_savings,
 			alternative_b_title = :alternative_b_title,
 			alternative_b_summary = :alternative_b_summary,
 			alternative_b_acquisition_approach = :alternative_b_acquisition_approach,
+			alternative_b_hosting_type = :alternative_b_hosting_type,
+			alternative_b_hosting_location = :alternative_b_hosting_location,
+			alternative_b_hosting_cloud_service_type = :alternative_b_hosting_cloud_service_type,
+			alternative_b_has_ui = :alternative_b_has_ui,
 			alternative_b_pros = :alternative_b_pros,
 			alternative_b_cons = :alternative_b_cons,
 			alternative_b_cost_savings = :alternative_b_cost_savings,

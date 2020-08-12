@@ -1,11 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { Link as UswdsLink } from '@trussworks/react-uswds';
 import MainContent from 'components/MainContent';
 import Header from 'components/Header';
 import BreadcrumbNav from 'components/BreadcrumbNav';
 import CollapsableLink from 'components/shared/CollapsableLink';
 import './index.scss';
-import Button from 'components/shared/Button';
 
 type NumberedListItemProps = {
   stepName: string;
@@ -56,7 +56,7 @@ const NumberedListTerminalItem = ({
 const GovernanceOverview = () => {
   return (
     <div className="easi-governance-overview">
-      <Header name="EASi Governance Overview" />
+      <Header />
       <MainContent className="grid-container">
         <BreadcrumbNav className="margin-y-2">
           <li>
@@ -158,7 +158,14 @@ const GovernanceOverview = () => {
             </>
           </CollapsableLink>
         </div>
-        <Button to="/system/new">Get started</Button>
+        <UswdsLink
+          className="usa-button"
+          asCustom={Link}
+          variant="unstyled"
+          to="/system/new"
+        >
+          Get started
+        </UswdsLink>
       </MainContent>
     </div>
   );

@@ -161,7 +161,29 @@ So this is customization that is up to you.
 
 ### Setup: direnv
 
-TODO: Need direnv setup
+Run `brew install direnv` to install.
+Add the following line at the very end of your `~/.bashrc`
+file: `eval "$(direnv hook bash)"`, and then restart your shell.
+(Here are [instructions for other shells](https://direnv.net/docs/hook.html).)
+To allow direnv in the project directory `direnv allow .`.
+
+Once this is setup, you should see `direnv` loading/unloading
+environment variables as you enter or depart from the
+project directory:
+
+```console
+$ cd easi-app
+direnv: loading ~/Project/easi-app/.envrc
+direnv: export +EXAMPLE_ENV +EXAMPLE_ENV_ADDITIONAL +EXAMPLE_ENV_MORE ... ~PATH
+$ cd ..
+direnv: unloading
+$
+```
+
+For additional documentation of this tool, see also:
+
+* The [official site](https://direnv.net/)
+* Truss' [Engineering Playbook](https://github.com/trussworks/Engineering-Playbook/tree/master/developing/direnv)
 
 ### Setup: Yarn (temporary)
 
@@ -352,26 +374,32 @@ You can edit the config [here](.air.conf)
 ### Swagger Generation
 
 The EASi server uses Swagger generation
-to access the CEDAR (data source) API.
-Swagger specs can be downloaded from webMethods:
+to access APIs from CEDAR (the data source).
+Swagger specs (EASi and LDAP) can be downloaded from webMethods:
 
-* [IMPL](webmethods-apigw.cedarimpl.cms.gov)
+* [IMPL](https://webmethods-apigw.cedarimpl.cms.gov)
 
-Put this file in ️`$CEDAR_DIRECTORY`
-and name it `swagger-<env>.yaml` respectively.
+Put these files in ️`$CEDAR_EASI_DIRECTORY` and `$CEDAR_LDAP_DIRECTORY`, respectively,
+and name them `swagger-<env>.yaml` respectively per environment.
 
 If you haven't run go-swagger before,
 you'll need to install it.
 Run:
 
-```go
+```shell script
 go build -o bin/swagger github.com/go-swagger/go-swagger/cmd/swagger
 ```
 
-Then, to generate the client run:
+Then, to generate the clients run:
 
-```go
-swagger generate client -f $CEDAR_SWAGGER_FILE -c $CEDAR_DIRECTORY/gen/client -m $CEDAR_DIRECTORY/gen/models
+```shell script
+swagger generate client -f $CEDAR_EASI_SWAGGER_FILE -c $CEDAR_EASI_DIRECTORY/gen/client -m $CEDAR_EASI_DIRECTORY/gen/models
+```
+
+and
+
+```shell script
+swagger generate client -f $CEDAR_LDAP_SWAGGER_FILE -c $CEDAR_LDAP_DIRECTORY/gen/client -m $CEDAR_LDAP_DIRECTORY/gen/models
 ```
 
 ### Golang cli app

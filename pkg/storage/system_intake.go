@@ -42,8 +42,7 @@ func (s *Store) CreateSystemIntake(intake *models.SystemIntake) (*models.SystemI
 			ea_support_request,
 			existing_contract,
 			created_at,
-			updated_at,
-		    submitted_at
+			updated_at
 		) 
 		VALUES (
 			:id,
@@ -68,8 +67,7 @@ func (s *Store) CreateSystemIntake(intake *models.SystemIntake) (*models.SystemI
 			:ea_support_request,
 			:existing_contract,
 		    :created_at,
-		    :updated_at,
-			:submitted_at
+		    :updated_at
 		)`
 	_, err := s.DB.NamedExec(
 		createIntakeSQL,
@@ -110,8 +108,11 @@ func (s *Store) UpdateSystemIntake(intake *models.SystemIntake) (*models.SystemI
 			process_status = :process_status,
 			ea_support_request = :ea_support_request,
 			existing_contract = :existing_contract,
+		    grt_review_email_body = :grt_review_email_body,
+		    requester_email_address = :requester_email_address,
 			updated_at = :updated_at,
 			submitted_at = :submitted_at,
+		    decided_at = :decided_at,
 			alfabet_id = :alfabet_id
 		WHERE system_intake.id = :id
 	`
@@ -132,6 +133,7 @@ func (s *Store) UpdateSystemIntake(intake *models.SystemIntake) (*models.SystemI
 // FetchSystemIntakeByID queries the DB for a system intake matching the given ID
 func (s *Store) FetchSystemIntakeByID(id uuid.UUID) (*models.SystemIntake, error) {
 	intake := models.SystemIntake{}
+
 	err := s.DB.Get(&intake, "SELECT * FROM public.system_intake WHERE id=$1", id)
 	if err != nil {
 		s.logger.Error(
@@ -142,6 +144,15 @@ func (s *Store) FetchSystemIntakeByID(id uuid.UUID) (*models.SystemIntake, error
 			return &models.SystemIntake{}, &apperrors.ResourceNotFoundError{Err: err, Resource: models.SystemIntake{}}
 		}
 		return &models.SystemIntake{}, err
+	}
+	// This should cover all statuses that might have a related business case on it.
+	// In the future submitted will also need to be checked.
+	if intake.Status != models.SystemIntakeStatusDRAFT {
+		bizCaseID, fetchErr := s.FetchBusinessCaseIDByIntakeID(intake.ID)
+		if fetchErr != nil {
+			return &intake, nil
+		}
+		intake.BusinessCaseID = bizCaseID
 	}
 	return &intake, nil
 }
@@ -156,6 +167,15 @@ func (s *Store) FetchSystemIntakesByEuaID(euaID string) (models.SystemIntakes, e
 			zap.String("euaID", euaID),
 		)
 		return models.SystemIntakes{}, err
+	}
+	for k, intake := range intakes {
+		if intake.Status != models.SystemIntakeStatusDRAFT {
+			bizCaseID, fetchErr := s.FetchBusinessCaseIDByIntakeID(intake.ID)
+			if fetchErr != nil {
+				return models.SystemIntakes{}, fetchErr
+			}
+			intakes[k].BusinessCaseID = bizCaseID
+		}
 	}
 	return intakes, nil
 }

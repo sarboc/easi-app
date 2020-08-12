@@ -2,6 +2,7 @@ import {
   GovernanceCollaborationTeam,
   SystemIntakeForm
 } from 'types/systemIntake';
+import { DateTime } from 'luxon';
 import cmsGovernanceTeams from '../constants/enums/cmsGovernanceTeams';
 
 // On the frontend, the field is now "requestName", but the backend API
@@ -13,7 +14,8 @@ export const initialSystemIntakeForm: SystemIntakeForm = {
   status: 'DRAFT',
   requester: {
     name: '',
-    component: ''
+    component: '',
+    email: ''
   },
   businessOwner: {
     name: '',
@@ -39,7 +41,10 @@ export const initialSystemIntakeForm: SystemIntakeForm = {
   businessSolution: '',
   currentStage: '',
   needsEaSupport: null,
-  hasContract: ''
+  hasContract: '',
+  grtReviewEmailBody: '',
+  decidedAt: null,
+  businessCaseId: null
 };
 
 export const prepareSystemIntakeForApi = (systemIntake: SystemIntakeForm) => {
@@ -75,7 +80,8 @@ export const prepareSystemIntakeForApi = (systemIntake: SystemIntakeForm) => {
     solution: systemIntake.businessSolution,
     processStatus: systemIntake.currentStage,
     eaSupportRequest: systemIntake.needsEaSupport,
-    existingContract: systemIntake.hasContract
+    existingContract: systemIntake.hasContract,
+    grtReviewEmailBody: systemIntake.grtReviewEmailBody
   };
 };
 
@@ -102,7 +108,8 @@ export const prepareSystemIntakeForApp = (
     status: systemIntake.status || 'DRAFT',
     requester: {
       name: systemIntake.requester || '',
-      component: systemIntake.component || ''
+      component: systemIntake.component || '',
+      email: systemIntake.requesterEmailAddress || ''
     },
     businessOwner: {
       name: systemIntake.businessOwner || '',
@@ -134,6 +141,11 @@ export const prepareSystemIntakeForApp = (
       systemIntake.eaSupportRequest === null
         ? null
         : systemIntake.eaSupportRequest,
-    hasContract: systemIntake.existingContract || ''
+    hasContract: systemIntake.existingContract || '',
+    grtReviewEmailBody: systemIntake.grtReviewEmailBody || '',
+    decidedAt: systemIntake.decidedAt
+      ? DateTime.fromISO(systemIntake.decidedAt)
+      : null,
+    businessCaseId: systemIntake.businessCase || null
   };
 };

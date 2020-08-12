@@ -9,8 +9,9 @@ describe('The System Intake Form', () => {
   });
 
   beforeEach(() => {
-    cy.server()
+    cy.server();
     cy.route('POST', '/api/v1/system_intake').as('postSystemIntake');
+    cy.route('PUT', '/api/v1/system_intake').as('putSystemIntake');
     cy.restoreLocalStorage();
     cy.visit('/system/new');
   });
@@ -27,10 +28,9 @@ describe('The System Intake Form', () => {
       .check({ force: true })
       .should('be.checked');
 
-    // Allow autosave
-    cy.wait('@postSystemIntake');
-
     cy.contains('button', 'Next').click();
+
+    cy.wait('@postSystemIntake');
 
     // Request Details
     cy.systemIntake.requestDetails.fillNonBranchingFields();
@@ -40,6 +40,8 @@ describe('The System Intake Form', () => {
       .should('be.checked');
 
     cy.contains('button', 'Next').click();
+
+    cy.wait('@putSystemIntake');
 
     // Review
     cy.contains('h1', 'Check your answers before sending');
@@ -71,9 +73,9 @@ describe('The System Intake Form', () => {
         .should('have.value', `${team.value} Collaborator`);
     });
 
-    cy.wait('@postSystemIntake');
-
     cy.contains('button', 'Next').click();
+
+    cy.wait('@postSystemIntake');
 
     // Request Details
     cy.systemIntake.requestDetails.fillNonBranchingFields();
@@ -87,6 +89,8 @@ describe('The System Intake Form', () => {
       .should('have.value', '111111');
 
     cy.contains('button', 'Next').click();
+
+    cy.wait('@putSystemIntake');
 
     // Review
     cy.contains('h1', 'Check your answers before sending');
@@ -197,8 +201,6 @@ describe('The System Intake Form', () => {
     cy.get('#IntakeForm-NoGovernanceTeam')
       .check({ force: true })
       .should('be.checked');
-
-    cy.wait('@postSystemIntake');
 
     cy.contains('button', 'Next').click();
 

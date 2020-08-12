@@ -7,8 +7,10 @@ import {
   fetchSystemIntake,
   storeSystemIntake,
   submitSystemIntake,
+  saveSystemIntake,
   clearSystemIntake,
-  postSystemIntake
+  postSystemIntake,
+  reviewSystemIntake
 } from 'types/routines';
 import { Action } from 'redux-actions';
 
@@ -36,6 +38,11 @@ function systemIntakeReducer(
         ...state,
         systemIntake: prepareSystemIntakeForApp(action.payload)
       };
+    case fetchSystemIntake.FAILURE:
+      return {
+        ...state,
+        error: action.payload
+      };
     case fetchSystemIntake.FULFILL:
       return {
         ...state,
@@ -62,6 +69,29 @@ function systemIntakeReducer(
         error: action.payload
       };
     case postSystemIntake.FULFILL:
+      return {
+        ...state,
+        isSaving: false
+      };
+    case saveSystemIntake.REQUEST:
+      return {
+        ...state,
+        isSaving: true
+      };
+    case saveSystemIntake.SUCCESS:
+      return {
+        ...state,
+        systemIntake: {
+          ...state.systemIntake,
+          ...prepareSystemIntakeForApp(action.payload)
+        }
+      };
+    case saveSystemIntake.FAILURE:
+      return {
+        ...state,
+        error: action.payload
+      };
+    case saveSystemIntake.FULFILL:
       return {
         ...state,
         isSaving: false
@@ -98,6 +128,30 @@ function systemIntakeReducer(
         error: action.payload
       };
     case submitSystemIntake.FULFILL:
+      return {
+        ...state,
+        isSubmitting: false
+      };
+    case reviewSystemIntake.REQUEST:
+      return {
+        ...state,
+        isSubmitting: true,
+        error: null
+      };
+    case reviewSystemIntake.SUCCESS:
+      return {
+        ...state,
+        systemIntake: {
+          ...state.systemIntake,
+          ...prepareSystemIntakeForApp(action.payload)
+        }
+      };
+    case reviewSystemIntake.FAILURE:
+      return {
+        ...state,
+        error: action.payload
+      };
+    case reviewSystemIntake.FULFILL:
       return {
         ...state,
         isSubmitting: false

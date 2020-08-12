@@ -3,10 +3,11 @@ import { Formik, Form, FormikProps } from 'formik';
 import { useHistory, useParams, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { SecureRoute } from '@okta/okta-react';
+import { Button } from '@trussworks/react-uswds';
+import isUUID from 'validator/lib/isUUID';
 import { ObjectSchema } from 'yup';
 import MainContent from 'components/MainContent';
 import Header from 'components/Header';
-import Button from 'components/shared/Button';
 import PageNumber from 'components/PageNumber';
 import { ErrorAlert, ErrorAlertMessage } from 'components/shared/ErrorAlert';
 import AutoSave from 'components/shared/AutoSave';
@@ -29,6 +30,7 @@ import AsIsSolution from './AsIsSolution';
 import PreferredSolution from './PreferredSolution';
 import AlternativeSolution from './AlternativeSolution';
 import Review from './Review';
+import Confirmation from './Confirmation';
 import './index.scss';
 
 type Page = {
@@ -79,6 +81,11 @@ export const BusinessCase = () => {
       name: 'Review',
       type: 'REVIEW',
       slug: 'review'
+    },
+    {
+      name: 'Confirmation',
+      type: 'CONFIRMATION',
+      slug: 'confirmation'
     }
   ]);
 
@@ -114,7 +121,7 @@ export const BusinessCase = () => {
   };
 
   const updateAvailablePages = () => {
-    const updatedPages = pages.slice(0, pages.length - 1).concat([
+    const updatedPages = pages.slice(0, pages.length - 2).concat([
       {
         name: 'AlternativeSolutionB',
         type: 'FORM',
@@ -123,8 +130,13 @@ export const BusinessCase = () => {
       },
       {
         name: 'Review',
-        type: 'Review',
+        type: 'REVIEW',
         slug: 'review'
+      },
+      {
+        name: 'Confirmation',
+        type: 'CONFIRMATION',
+        slug: 'confirmation'
       }
     ]);
     setPages(updatedPages);
@@ -148,6 +160,20 @@ export const BusinessCase = () => {
     }
 
     return () => {
+      // if has valid uuid, autosave business case when unmounting
+      if (isUUID(businessCaseId)) {
+        const {
+          current
+        }: { current: FormikProps<BusinessCaseModel> } = formikRef;
+        dispatch(
+          putBusinessCase({
+            businessCase,
+            ...current.values
+          })
+        );
+      }
+
+      // clear business case when unmounting
       dispatch(clearBusinessCase());
     };
 
@@ -182,7 +208,7 @@ export const BusinessCase = () => {
   // Handle submit
   useEffect(() => {
     if (prevIsSubmitting && !isSubmitting && !error) {
-      history.push('/');
+      history.push(`/business/${businessCaseId}/confirmation`);
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -190,7 +216,7 @@ export const BusinessCase = () => {
 
   return (
     <div className="business-case margin-bottom-5">
-      <Header name="CMS Business Case" />
+      <Header />
       <MainContent>
         {businessCase.id && (
           <Formik
@@ -313,23 +339,27 @@ export const BusinessCase = () => {
                       path="/business/:businessCaseId/review"
                       render={() => <Review formikProps={formikProps} />}
                     />
-
+                    <SecureRoute
+                      path="/business/:businessCaseId/confirmation"
+                      render={() => <Confirmation />}
+                    />
                     <div className="grid-container">
-                      {pageIndex > 0 && (
-                        <Button
-                          type="button"
-                          outline
-                          onClick={() => {
-                            setErrors({});
-                            const newUrl = pages[pageIndex - 1].slug;
-                            history.push(newUrl);
-                            window.scrollTo(0, 0);
-                          }}
-                        >
-                          Back
-                        </Button>
-                      )}
-                      {pageIndex < pages.length - 1 && (
+                      {pageIndex > 0 &&
+                        pages[pageIndex].type !== 'CONFIRMATION' && (
+                          <Button
+                            type="button"
+                            outline
+                            onClick={() => {
+                              setErrors({});
+                              const newUrl = pages[pageIndex - 1].slug;
+                              history.push(newUrl);
+                              window.scrollTo(0, 0);
+                            }}
+                          >
+                            Back
+                          </Button>
+                        )}
+                      {pageIndex < pages.length - 2 && (
                         <Button
                           type="button"
                           onClick={() => {
@@ -348,7 +378,7 @@ export const BusinessCase = () => {
                           Next
                         </Button>
                       )}
-                      {pageIndex === pages.length - 1 && (
+                      {pages[pageIndex].type === 'REVIEW' && (
                         <Button type="submit" disabled={isSubmitting}>
                           Send my business case
                         </Button>

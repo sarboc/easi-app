@@ -7,7 +7,7 @@ import Login from 'views/Login';
 import GovernanceOverview from 'views/GovernanceOverview';
 import GovernanceTaskList from 'views/GovernanceTaskList';
 import BusinessCase from 'views/BusinessCase';
-import GRTSystemIntakeReview from 'views/GRTSystemIntakeReview';
+import GrtSystemIntakeReview from 'views/GrtSystemIntakeReview';
 import GrtBusinessCaseReview from 'views/GrtBusinessCaseReview';
 import SystemIntake from 'views/SystemIntake';
 import Sandbox from 'views/Sandbox';
@@ -40,7 +40,8 @@ class App extends React.Component<MainProps, MainState> {
             <TimeOutWrapper>
               <Switch>
                 <Route path="/" exact component={Home} />
-                <Route path="/login" exact component={Login} />
+                <Redirect exact from="/login" to="/signin" />
+                <Route path="/signin" exact component={Login} />
                 {process.env.NODE_ENV === 'development' && (
                   <Route path="/sandbox" exact component={Sandbox} />
                 )}
@@ -62,7 +63,7 @@ class App extends React.Component<MainProps, MainState> {
                   exact
                   path="/system/:systemId/grt-review"
                   render={({ component }: any) => component()}
-                  component={GRTSystemIntakeReview}
+                  component={GrtSystemIntakeReview}
                 />
                 <Redirect
                   exact

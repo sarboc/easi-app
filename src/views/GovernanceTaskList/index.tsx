@@ -1,14 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-
+import { Button } from '@trussworks/react-uswds';
 import Header from 'components/Header';
 import MainContent from 'components/MainContent';
 import BreadcrumbNav from 'components/BreadcrumbNav';
 import Alert from 'components/shared/Alert';
 import { AppState } from 'reducers/rootReducer';
-import { fetchSystemIntake } from 'types/routines';
-import { SystemIntakeForm } from 'types/systemIntake';
+import { fetchBusinessCase, fetchSystemIntake } from 'types/routines';
+import {
+  intakeStatusFromIntake,
+  chooseIntakeLink,
+  feedbackStatusFromIntakeStatus,
+  bizCaseStatus
+} from 'data/taskList';
 import TaskListItem from './TaskListItem';
 import SideNavActions from './SideNavActions';
 import './index.scss';
@@ -27,36 +32,21 @@ const GovernanceTaskList = () => {
     (state: AppState) => state.systemIntake.systemIntake
   );
 
-  const calculateIntakeStatus = (intake: SystemIntakeForm) => {
-    if (intake.id === '') {
-      return 'START';
+  useEffect(() => {
+    if (systemIntake.id && systemIntake.businessCaseId) {
+      dispatch(fetchBusinessCase(systemIntake.businessCaseId));
     }
-    if (intake.status === 'DRAFT') {
-      return 'CONTINUE';
-    }
-    return 'COMPLETED';
-  };
-  const intakeStatus = calculateIntakeStatus(systemIntake);
-  const chooseIntakeLink = (intake: SystemIntakeForm, status: string) => {
-    const newIntakeLink = '/system/new';
-    if (intake.id === '') {
-      return newIntakeLink;
-    }
-    let link: string;
-    switch (status) {
-      case 'CONTINUE':
-        link = `/system/${intake.id}/contact-details`;
-        break;
-      case 'COMPLETED':
-        // This will need to be changed once we have an intake review page
-        link = '/';
-        break;
-      default:
-        link = newIntakeLink;
-    }
-    return link;
-  };
+  }, [dispatch, systemIntake.id, systemIntake.businessCaseId]);
+  const businessCase = useSelector(
+    (state: AppState) => state.businessCase.form
+  );
+
+  const intakeStatus = intakeStatusFromIntake(systemIntake);
   const intakeLink = chooseIntakeLink(systemIntake, intakeStatus);
+  const intakeFeedbackStatus = feedbackStatusFromIntakeStatus(
+    systemIntake.status
+  );
+  const businessCaseStatus = bizCaseStatus(intakeStatus, businessCase);
 
   return (
     <div className="governance-task-list">
@@ -80,7 +70,7 @@ const GovernanceTaskList = () => {
             <h1 className="font-heading-2xl margin-top-4">
               Get governance approval
               <span className="display-block line-height-body-5 font-body-lg text-light">
-                for adding a new system or service
+                {`for ${systemIntake.requestName}`}
               </span>
             </h1>
             <ol className="governance-task-list__task-list governance-task-list__task-list--primary">
@@ -96,13 +86,13 @@ const GovernanceTaskList = () => {
                 description="The Governance Admin Team will review your request and decide if it
               needs further governance. If it does, they’ll direct you to go through
               the remaining steps."
-                status="CANNOT_START"
-                link="/"
+                status={intakeFeedbackStatus}
+                link="/" // link is unused for this item
               />
               <TaskListItem
                 heading="Prepare your Business Case"
                 description="Draft different solutions and the corresponding costs involved."
-                status="CANNOT_START"
+                status={businessCaseStatus}
                 link="/"
               />
             </ol>
@@ -112,15 +102,18 @@ const GovernanceTaskList = () => {
               Please get in touch with the governance admin team [email] if you
               have any questions about your process.
             </Alert>
-            <button
+
+            <Button
               type="button"
-              className="governance-task-list__remaining-steps-btn"
+              className="margin-y-2"
               onClick={() => setDisplayRemainingSteps(prev => !prev)}
               aria-expanded={displayRemainingSteps}
               aria-controls="GovernanceTaskList-SecondaryList"
+              data-testid="remaining-steps-btn"
+              unstyled
             >
               {displayRemainingSteps ? 'Hide' : 'Show'} remaining steps
-            </button>
+            </Button>
 
             {displayRemainingSteps && (
               <ol
