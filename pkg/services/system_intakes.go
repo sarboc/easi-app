@@ -79,49 +79,15 @@ func NewCreateSystemIntake(
 	}
 }
 
-// NewAuthorizeUpdateSystemIntake returns a function
-// that authorizes a user for updating a system intake
-func NewAuthorizeUpdateSystemIntake(_ *zap.Logger) func(
-	c context.Context,
-	i *models.SystemIntake,
-) (bool, error) {
-	return func(ctx context.Context, intake *models.SystemIntake) (bool, error) {
-		logger := appcontext.ZLogger(ctx)
-		principal := appcontext.Principal(ctx)
-		if !principal.AllowEASi() {
-			logger.Error("unable to get EUA ID from context")
-			return false, &apperrors.ContextError{
-				Operation: apperrors.ContextGet,
-				Object:    "EUA ID",
-			}
-		}
-
-		// If intake doesn't exist or owned by user, authorize
-		if principal.AllowEASi() && (intake == nil || principal.ID() == intake.EUAUserID) {
-			logger.With(zap.Bool("Authorized", true)).
-				With(zap.String("Operation", "UpdateSystemIntake")).
-				Info("user authorized to save system intake")
-			return true, nil
-		}
-		// Default to failure to authorize and create a quick audit log
-		logger.With(zap.Bool("Authorized", false)).
-			With(zap.String("Operation", "UpdateSystemIntake")).
-			Info("unauthorized attempt to save system intake")
-		return false, nil
-	}
-}
-
 // NewUpdateSystemIntake is a service to update a system intake
 func NewUpdateSystemIntake(
-	config Config,
-	update func(c context.Context, intake *models.SystemIntake) (*models.SystemIntake, error),
 	fetch func(c context.Context, id uuid.UUID) (*models.SystemIntake, error),
-	authorize func(context.Context, *models.SystemIntake) (bool, error),
-	validateAndSubmit func(intake *models.SystemIntake, logger *zap.Logger) (string, error),
-	sendSubmitEmail func(requester string, intakeID uuid.UUID) error,
-	fetchRequesterEmail func(logger *zap.Logger, euaID string) (string, error),
-	sendReviewEmail func(emailText string, recipientAddress string) error,
 	canDecideIntake bool,
+	updateDRAFTIntake func(context.Context, *models.SystemIntake, *models.SystemIntake) (*models.SystemIntake, error),
+	submitIntake func(context.Context, *models.SystemIntake, *models.SystemIntake) (*models.SystemIntake, error),
+	decideIntakeACCEPTED func(context.Context, *models.SystemIntake, *models.SystemIntake) (*models.SystemIntake, error),
+	decideIntakeAPPROVED func(context.Context, *models.SystemIntake, *models.SystemIntake) (*models.SystemIntake, error),
+	decideIntakeCLOSED func(context.Context, *models.SystemIntake, *models.SystemIntake) (*models.SystemIntake, error),
 ) func(c context.Context, i *models.SystemIntake) (*models.SystemIntake, error) {
 	return func(ctx context.Context, intake *models.SystemIntake) (*models.SystemIntake, error) {
 		existingIntake, fetchErr := fetch(ctx, intake.ID)
@@ -132,107 +98,17 @@ func NewUpdateSystemIntake(
 				Model:     existingIntake,
 			}
 		}
-		ok, err := authorize(ctx, existingIntake)
-		if err != nil {
-			return &models.SystemIntake{}, err
-		}
-		if !ok {
-			return &models.SystemIntake{}, &apperrors.UnauthorizedError{Err: err}
-		}
-
-		updatedTime := config.clock.Now()
-		intake.UpdatedAt = &updatedTime
 
 		if existingIntake.Status == models.SystemIntakeStatusDRAFT && intake.Status == models.SystemIntakeStatusDRAFT {
-			intake, err = update(ctx, intake)
-			if err != nil {
-				return &models.SystemIntake{}, &apperrors.QueryError{
-					Err:       err,
-					Model:     intake,
-					Operation: apperrors.QuerySave,
-				}
-			}
-			return intake, nil
+			return updateDRAFTIntake(ctx, existingIntake, intake)
 		} else if existingIntake.Status == models.SystemIntakeStatusDRAFT && intake.Status == models.SystemIntakeStatusSUBMITTED {
-			if intake.AlfabetID.Valid {
-				err := &apperrors.ResourceConflictError{
-					Err:        errors.New("intake has already been submitted to CEDAR"),
-					ResourceID: intake.ID.String(),
-					Resource:   intake,
-				}
-				return &models.SystemIntake{}, err
-			}
-
-			intake.SubmittedAt = &updatedTime
-			alfabetID, validateAndSubmitErr := validateAndSubmit(intake, appcontext.ZLogger(ctx))
-			if validateAndSubmitErr != nil {
-				return &models.SystemIntake{}, validateAndSubmitErr
-			}
-			if alfabetID == "" {
-				return &models.SystemIntake{}, &apperrors.ExternalAPIError{
-					Err:       errors.New("submission was not successful"),
-					Model:     intake,
-					ModelID:   intake.ID.String(),
-					Operation: apperrors.Submit,
-					Source:    "CEDAR EASi",
-				}
-			}
-			intake.AlfabetID = null.StringFrom(alfabetID)
-			intake, err = update(ctx, intake)
-			if err != nil {
-				return &models.SystemIntake{}, &apperrors.QueryError{
-					Err:       err,
-					Model:     intake,
-					Operation: apperrors.QuerySave,
-				}
-			}
-			// only send an email when everything went ok
-			err = sendSubmitEmail(intake.Requester, intake.ID)
-			if err != nil {
-				return &models.SystemIntake{}, err
-			}
-
-			return intake, nil
-		} else if existingIntake.Status == models.SystemIntakeStatusSUBMITTED &&
-			(intake.Status == models.SystemIntakeStatusAPPROVED ||
-				intake.Status == models.SystemIntakeStatusACCEPTED ||
-				intake.Status == models.SystemIntakeStatusCLOSED) && canDecideIntake {
-
-			recipientAddress, err := fetchRequesterEmail(appcontext.ZLogger(ctx), existingIntake.EUAUserID)
-			if err != nil {
-				return &models.SystemIntake{}, err
-			}
-			if recipientAddress == "" {
-				return &models.SystemIntake{}, &apperrors.ExternalAPIError{
-					Err:       errors.New("email address fetch was not successful"),
-					Model:     existingIntake,
-					ModelID:   intake.ID.String(),
-					Operation: apperrors.Fetch,
-					Source:    "CEDAR LDAP",
-				}
-			}
-
-			existingIntake.Status = intake.Status
-			existingIntake.GrtReviewEmailBody = intake.GrtReviewEmailBody
-			existingIntake.RequesterEmailAddress = null.StringFrom(recipientAddress)
-			existingIntake.DecidedAt = &updatedTime
-			existingIntake.UpdatedAt = &updatedTime
-			// This ensures only certain fields can be modified.
-			intake, err = update(ctx, existingIntake)
-			if err != nil {
-				return &models.SystemIntake{}, &apperrors.QueryError{
-					Err:       err,
-					Model:     intake,
-					Operation: apperrors.QuerySave,
-				}
-			}
-
-			err = sendReviewEmail(intake.GrtReviewEmailBody.String, recipientAddress)
-			if err != nil {
-				return &models.SystemIntake{}, err
-			}
-
-			return intake, nil
+			return submitIntake(ctx, existingIntake, intake)
+		} else if existingIntake.Status == models.SystemIntakeStatusSUBMITTED && intake.Status == models.SystemIntakeStatusAPPROVED && canDecideIntake {
+			return decideIntakeAPPROVED(ctx, existingIntake, intake)
+		} else if existingIntake.Status == models.SystemIntakeStatusSUBMITTED && intake.Status == models.SystemIntakeStatusACCEPTED && canDecideIntake {
+			return decideIntakeACCEPTED(ctx, existingIntake, intake)
+		} else if existingIntake.Status == models.SystemIntakeStatusSUBMITTED && intake.Status == models.SystemIntakeStatusCLOSED && canDecideIntake {
+			return decideIntakeCLOSED(ctx, existingIntake, intake)
 		} else {
 			return &models.SystemIntake{}, &apperrors.ResourceConflictError{
 				Err:        errors.New("invalid intake status change"),
@@ -243,9 +119,156 @@ func NewUpdateSystemIntake(
 	}
 }
 
+func NewUpdateDRAFTSystemIntake(
+	config Config,
+	authorize func(context.Context, *models.SystemIntake) (bool, error),
+	update func(c context.Context, intake *models.SystemIntake) (*models.SystemIntake, error),
+) func(context.Context, *models.SystemIntake, *models.SystemIntake) (*models.SystemIntake, error) {
+	return func(ctx context.Context, existingIntake *models.SystemIntake, updatingIntake *models.SystemIntake) (*models.SystemIntake, error) {
+		ok, err := authorize(ctx, existingIntake)
+		if err != nil {
+			return &models.SystemIntake{}, err
+		}
+		if !ok {
+			return &models.SystemIntake{}, &apperrors.UnauthorizedError{Err: err}
+		}
+
+		updatedTime := config.clock.Now()
+		updatingIntake.UpdatedAt = &updatedTime
+
+		updatingIntake, err = update(ctx, updatingIntake)
+		if err != nil {
+			return &models.SystemIntake{}, &apperrors.QueryError{
+				Err:       err,
+				Model:     updatingIntake,
+				Operation: apperrors.QuerySave,
+			}
+		}
+		return updatingIntake, nil
+	}
+}
+
+func NewSubmitSystemIntake(
+	config Config,
+	authorize func(context.Context, *models.SystemIntake) (bool, error),
+	update func(c context.Context, intake *models.SystemIntake) (*models.SystemIntake, error),
+	validateAndSubmit func(intake *models.SystemIntake, logger *zap.Logger) (string, error),
+	sendSubmitEmail func(requester string, intakeID uuid.UUID) error,
+) func(context.Context, *models.SystemIntake, *models.SystemIntake) (*models.SystemIntake, error) {
+	return func(ctx context.Context, existingIntake *models.SystemIntake, updatingIntake *models.SystemIntake) (*models.SystemIntake, error) {
+		ok, err := authorize(ctx, existingIntake)
+		if err != nil {
+			return &models.SystemIntake{}, err
+		}
+		if !ok {
+			return &models.SystemIntake{}, &apperrors.UnauthorizedError{Err: err}
+		}
+
+		updatedTime := config.clock.Now()
+		updatingIntake.UpdatedAt = &updatedTime
+
+		if updatingIntake.AlfabetID.Valid {
+			err := &apperrors.ResourceConflictError{
+				Err:        errors.New("intake has already been submitted to CEDAR"),
+				ResourceID: updatingIntake.ID.String(),
+				Resource:   updatingIntake,
+			}
+			return &models.SystemIntake{}, err
+		}
+
+		updatingIntake.SubmittedAt = &updatedTime
+		alfabetID, validateAndSubmitErr := validateAndSubmit(updatingIntake, appcontext.ZLogger(ctx))
+		if validateAndSubmitErr != nil {
+			return &models.SystemIntake{}, validateAndSubmitErr
+		}
+		if alfabetID == "" {
+			return &models.SystemIntake{}, &apperrors.ExternalAPIError{
+				Err:       errors.New("submission was not successful"),
+				Model:     updatingIntake,
+				ModelID:   updatingIntake.ID.String(),
+				Operation: apperrors.Submit,
+				Source:    "CEDAR EASi",
+			}
+		}
+		updatingIntake.AlfabetID = null.StringFrom(alfabetID)
+		updatingIntake, err = update(ctx, updatingIntake)
+		if err != nil {
+			return &models.SystemIntake{}, &apperrors.QueryError{
+				Err:       err,
+				Model:     updatingIntake,
+				Operation: apperrors.QuerySave,
+			}
+		}
+		// only send an email when everything went ok
+		err = sendSubmitEmail(updatingIntake.Requester, updatingIntake.ID)
+		if err != nil {
+			return &models.SystemIntake{}, err
+		}
+
+		return updatingIntake, nil
+	}
+}
+
+func NewDecideSystemIntake(
+	config Config,
+	authorize func(context.Context, *models.SystemIntake) (bool, error),
+	fetchRequesterEmail func(logger *zap.Logger, euaID string) (string, error),
+	update func(c context.Context, intake *models.SystemIntake) (*models.SystemIntake, error),
+	sendReviewEmail func(emailText string, recipientAddress string) error,
+) func(context.Context, *models.SystemIntake, *models.SystemIntake) (*models.SystemIntake, error) {
+	return func(ctx context.Context, existingIntake *models.SystemIntake, updatingIntake *models.SystemIntake) (*models.SystemIntake, error) {
+		ok, err := authorize(ctx, existingIntake)
+		if err != nil {
+			return &models.SystemIntake{}, err
+		}
+		if !ok {
+			return &models.SystemIntake{}, &apperrors.UnauthorizedError{Err: err}
+		}
+
+		updatedTime := config.clock.Now()
+		updatingIntake.UpdatedAt = &updatedTime
+
+		recipientAddress, err := fetchRequesterEmail(appcontext.ZLogger(ctx), existingIntake.EUAUserID)
+		if err != nil {
+			return &models.SystemIntake{}, err
+		}
+		if recipientAddress == "" {
+			return &models.SystemIntake{}, &apperrors.ExternalAPIError{
+				Err:       errors.New("email address fetch was not successful"),
+				Model:     existingIntake,
+				ModelID:   updatingIntake.ID.String(),
+				Operation: apperrors.Fetch,
+				Source:    "CEDAR LDAP",
+			}
+		}
+
+		existingIntake.Status = updatingIntake.Status
+		existingIntake.GrtReviewEmailBody = updatingIntake.GrtReviewEmailBody
+		existingIntake.RequesterEmailAddress = null.StringFrom(recipientAddress)
+		existingIntake.DecidedAt = &updatedTime
+		existingIntake.UpdatedAt = &updatedTime
+		// This ensures only certain fields can be modified.
+		updatingIntake, err = update(ctx, existingIntake)
+		if err != nil {
+			return &models.SystemIntake{}, &apperrors.QueryError{
+				Err:       err,
+				Model:     updatingIntake,
+				Operation: apperrors.QuerySave,
+			}
+		}
+
+		err = sendReviewEmail(updatingIntake.GrtReviewEmailBody.String, recipientAddress)
+		if err != nil {
+			return &models.SystemIntake{}, err
+		}
+
+		return updatingIntake, nil
+	}
+}
+
 // NewAuthorizeArchiveSystemIntake returns a function
 // that authorizes a user for archiving a system intake
-func NewAuthorizeArchiveSystemIntake(logger *zap.Logger) func(
+func NewAuthorizeUserIsIntakeRequester(logger *zap.Logger) func(
 	c context.Context,
 	i *models.SystemIntake,
 ) (bool, error) {
@@ -271,6 +294,13 @@ func NewAuthorizeArchiveSystemIntake(logger *zap.Logger) func(
 			With(zap.String("Operation", "UpdateSystemIntake")).
 			Info("unauthorized attempt to save system intake")
 		return false, nil
+	}
+}
+
+// NewAuthorizeFetchSystemIntakesByEuaID is a service to authorize FetchSystemIntakesByEuaID
+func NewAuthorizeUserIsGRT() func(context.Context, *models.SystemIntake) (bool, error) {
+	return func(ctx context.Context, intake *models.SystemIntake) (bool, error) {
+		return true, nil
 	}
 }
 

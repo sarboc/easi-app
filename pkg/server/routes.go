@@ -113,15 +113,41 @@ func (s *Server) routes(
 			store.CreateSystemIntake,
 		),
 		services.NewUpdateSystemIntake(
-			serviceConfig,
-			store.UpdateSystemIntake,
 			store.FetchSystemIntakeByID,
-			services.NewAuthorizeUpdateSystemIntake(s.logger),
-			cedarEasiClient.ValidateAndSubmitSystemIntake,
-			emailClient.SendSystemIntakeSubmissionEmail,
-			cedarLdapClient.FetchUserEmailAddress,
-			emailClient.SendSystemIntakeReviewEmail,
 			!s.environment.Prod(),
+			services.NewUpdateDRAFTSystemIntake(
+				serviceConfig,
+				services.NewAuthorizeUserIsIntakeRequester(s.logger),
+				store.UpdateSystemIntake,
+			),
+			services.NewSubmitSystemIntake(
+				serviceConfig,
+				services.NewAuthorizeUserIsIntakeRequester(s.logger),
+				store.UpdateSystemIntake,
+				cedarEasiClient.ValidateAndSubmitSystemIntake,
+				emailClient.SendSystemIntakeSubmissionEmail,
+			),
+			services.NewDecideSystemIntake(
+				serviceConfig,
+				services.NewAuthorizeUserIsGRT(),
+				cedarLdapClient.FetchUserEmailAddress,
+				store.UpdateSystemIntake,
+				emailClient.SendSystemIntakeReviewEmail,
+			),
+			services.NewDecideSystemIntake(
+				serviceConfig,
+				services.NewAuthorizeUserIsGRT(),
+				cedarLdapClient.FetchUserEmailAddress,
+				store.UpdateSystemIntake,
+				emailClient.SendSystemIntakeReviewEmail,
+			),
+			services.NewDecideSystemIntake(
+				serviceConfig,
+				services.NewAuthorizeUserIsGRT(),
+				cedarLdapClient.FetchUserEmailAddress,
+				store.UpdateSystemIntake,
+				emailClient.SendSystemIntakeReviewEmail,
+			),
 		),
 		services.NewFetchSystemIntakeByID(
 			serviceConfig,
@@ -137,7 +163,7 @@ func (s *Server) routes(
 				store.FetchBusinessCaseByID,
 				store.UpdateBusinessCase,
 			),
-			services.NewAuthorizeArchiveSystemIntake(s.logger),
+			services.NewAuthorizeUserIsIntakeRequester(s.logger),
 		),
 	)
 	api.Handle("/system_intake/{intake_id}", systemIntakeHandler.Handle())
