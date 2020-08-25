@@ -79,6 +79,25 @@ func NewCreateSystemIntake(
 	}
 }
 
+func determineState(existingStatus, newStatus models.SystemIntakeStatus) int {
+	if existingStatus == models.SystemIntakeStatusDRAFT {
+		if newStatus == models.SystemIntakeStatusDRAFT {
+			return models.EditDraftIntake
+		} else if newStatus == models.SystemIntakeStatusSUBMITTED {
+			return models.SubmitIntake
+		}
+	} else if existingStatus == models.SystemIntakeStatusSUBMITTED {
+		if newStatus == models.SystemIntakeStatusACCEPTED {
+			return models.DecideIntakeAccepted
+		} else if newStatus == models.SystemIntakeStatusAPPROVED {
+			return models.DecideIntakeApproved
+		} else if newStatus == models.SystemIntakeStatusCLOSED {
+			return models.DecideIntakeClosed
+		}
+	}
+	return models.BadTransition
+}
+
 // NewUpdateSystemIntake is a service to update a system intake
 func NewUpdateSystemIntake(
 	fetch func(c context.Context, id uuid.UUID) (*models.SystemIntake, error),
@@ -99,17 +118,19 @@ func NewUpdateSystemIntake(
 			}
 		}
 
-		if existingIntake.Status == models.SystemIntakeStatusDRAFT && intake.Status == models.SystemIntakeStatusDRAFT {
+		transition := determineState(existingIntake.Status, intake.Status)
+		switch transition {
+		case models.EditDraftIntake:
 			return updateDRAFTIntake(ctx, existingIntake, intake)
-		} else if existingIntake.Status == models.SystemIntakeStatusDRAFT && intake.Status == models.SystemIntakeStatusSUBMITTED {
+		case models.SubmitIntake:
 			return submitIntake(ctx, existingIntake, intake)
-		} else if existingIntake.Status == models.SystemIntakeStatusSUBMITTED && intake.Status == models.SystemIntakeStatusAPPROVED && canDecideIntake {
-			return decideIntakeAPPROVED(ctx, existingIntake, intake)
-		} else if existingIntake.Status == models.SystemIntakeStatusSUBMITTED && intake.Status == models.SystemIntakeStatusACCEPTED && canDecideIntake {
+		case models.DecideIntakeAccepted:
 			return decideIntakeACCEPTED(ctx, existingIntake, intake)
-		} else if existingIntake.Status == models.SystemIntakeStatusSUBMITTED && intake.Status == models.SystemIntakeStatusCLOSED && canDecideIntake {
+		case models.DecideIntakeApproved:
+			return decideIntakeAPPROVED(ctx, existingIntake, intake)
+		case models.DecideIntakeClosed:
 			return decideIntakeCLOSED(ctx, existingIntake, intake)
-		} else {
+		default:
 			return &models.SystemIntake{}, &apperrors.ResourceConflictError{
 				Err:        errors.New("invalid intake status change"),
 				Resource:   intake,
@@ -119,6 +140,7 @@ func NewUpdateSystemIntake(
 	}
 }
 
+// NewUpdateDRAFTSystemIntake serives DRAFT-DRAFT transition
 func NewUpdateDRAFTSystemIntake(
 	config Config,
 	authorize func(context.Context, *models.SystemIntake) (bool, error),
@@ -148,6 +170,7 @@ func NewUpdateDRAFTSystemIntake(
 	}
 }
 
+// NewSubmitSystemIntake services DRAFT-SUBMIT transition
 func NewSubmitSystemIntake(
 	config Config,
 	authorize func(context.Context, *models.SystemIntake) (bool, error),
@@ -209,6 +232,7 @@ func NewSubmitSystemIntake(
 	}
 }
 
+// NewDecideSystemIntake services SUBMITTED-(ACCEPTED/APPROVED/CLOSED) transition
 func NewDecideSystemIntake(
 	config Config,
 	authorize func(context.Context, *models.SystemIntake) (bool, error),
@@ -266,7 +290,7 @@ func NewDecideSystemIntake(
 	}
 }
 
-// NewAuthorizeArchiveSystemIntake returns a function
+// NewAuthorizeUserIsIntakeRequester returns a function
 // that authorizes a user for archiving a system intake
 func NewAuthorizeUserIsIntakeRequester(logger *zap.Logger) func(
 	c context.Context,
@@ -297,7 +321,7 @@ func NewAuthorizeUserIsIntakeRequester(logger *zap.Logger) func(
 	}
 }
 
-// NewAuthorizeFetchSystemIntakesByEuaID is a service to authorize FetchSystemIntakesByEuaID
+// NewAuthorizeUserIsGRT is a service to authorize FetchSystemIntakesByEuaID
 func NewAuthorizeUserIsGRT() func(context.Context, *models.SystemIntake) (bool, error) {
 	return func(ctx context.Context, intake *models.SystemIntake) (bool, error) {
 		return true, nil
