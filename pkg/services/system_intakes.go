@@ -13,6 +13,12 @@ import (
 	"github.com/cmsgov/easi-app/pkg/models"
 )
 
+// UpdateIntakeTransition is a type for update transition function
+type UpdateIntakeTransition func(context.Context, *models.SystemIntake, *models.SystemIntake) (*models.SystemIntake, error)
+
+// DeleteIntakeTransition is a type for archive transition function
+type DeleteIntakeTransition func(context.Context, *uuid.UUID) error
+
 // NewAuthorizeFetchSystemIntakesByEuaID is a service to authorize FetchSystemIntakesByEuaID
 func NewAuthorizeFetchSystemIntakesByEuaID() func(ctx context.Context, euaID string) (bool, error) {
 	return func(ctx context.Context, euaID string) (bool, error) {
@@ -53,7 +59,7 @@ func NewFetchSystemIntakesByEuaID(
 func NewCreateSystemIntake(
 	config Config,
 	create func(c context.Context, intake *models.SystemIntake) (*models.SystemIntake, error),
-) func(c context.Context, i *models.SystemIntake) (*models.SystemIntake, error) {
+) func(context.Context, *models.SystemIntake) (*models.SystemIntake, error) {
 	return func(ctx context.Context, intake *models.SystemIntake) (*models.SystemIntake, error) {
 		logger := appcontext.ZLogger(ctx)
 		principal := appcontext.Principal(ctx)
@@ -102,11 +108,11 @@ func determineState(existingStatus, newStatus models.SystemIntakeStatus) int {
 func NewUpdateSystemIntake(
 	fetch func(c context.Context, id uuid.UUID) (*models.SystemIntake, error),
 	canDecideIntake bool,
-	updateDRAFTIntake func(context.Context, *models.SystemIntake, *models.SystemIntake) (*models.SystemIntake, error),
-	submitIntake func(context.Context, *models.SystemIntake, *models.SystemIntake) (*models.SystemIntake, error),
-	decideIntakeACCEPTED func(context.Context, *models.SystemIntake, *models.SystemIntake) (*models.SystemIntake, error),
-	decideIntakeAPPROVED func(context.Context, *models.SystemIntake, *models.SystemIntake) (*models.SystemIntake, error),
-	decideIntakeCLOSED func(context.Context, *models.SystemIntake, *models.SystemIntake) (*models.SystemIntake, error),
+	updateDRAFTIntake UpdateIntakeTransition,
+	submitIntake UpdateIntakeTransition,
+	decideIntakeACCEPTED UpdateIntakeTransition,
+	decideIntakeAPPROVED UpdateIntakeTransition,
+	decideIntakeCLOSED UpdateIntakeTransition,
 ) func(c context.Context, i *models.SystemIntake) (*models.SystemIntake, error) {
 	return func(ctx context.Context, intake *models.SystemIntake) (*models.SystemIntake, error) {
 		existingIntake, fetchErr := fetch(ctx, intake.ID)
@@ -145,7 +151,7 @@ func NewUpdateDRAFTSystemIntake(
 	config Config,
 	authorize func(context.Context, *models.SystemIntake) (bool, error),
 	update func(c context.Context, intake *models.SystemIntake) (*models.SystemIntake, error),
-) func(context.Context, *models.SystemIntake, *models.SystemIntake) (*models.SystemIntake, error) {
+) UpdateIntakeTransition {
 	return func(ctx context.Context, existingIntake *models.SystemIntake, updatingIntake *models.SystemIntake) (*models.SystemIntake, error) {
 		ok, err := authorize(ctx, existingIntake)
 		if err != nil {
@@ -177,7 +183,7 @@ func NewSubmitSystemIntake(
 	update func(c context.Context, intake *models.SystemIntake) (*models.SystemIntake, error),
 	validateAndSubmit func(intake *models.SystemIntake, logger *zap.Logger) (string, error),
 	sendSubmitEmail func(requester string, intakeID uuid.UUID) error,
-) func(context.Context, *models.SystemIntake, *models.SystemIntake) (*models.SystemIntake, error) {
+) UpdateIntakeTransition {
 	return func(ctx context.Context, existingIntake *models.SystemIntake, updatingIntake *models.SystemIntake) (*models.SystemIntake, error) {
 		ok, err := authorize(ctx, existingIntake)
 		if err != nil {
@@ -239,7 +245,7 @@ func NewDecideSystemIntake(
 	fetchRequesterEmail func(logger *zap.Logger, euaID string) (string, error),
 	update func(c context.Context, intake *models.SystemIntake) (*models.SystemIntake, error),
 	sendReviewEmail func(emailText string, recipientAddress string) error,
-) func(context.Context, *models.SystemIntake, *models.SystemIntake) (*models.SystemIntake, error) {
+) UpdateIntakeTransition {
 	return func(ctx context.Context, existingIntake *models.SystemIntake, updatingIntake *models.SystemIntake) (*models.SystemIntake, error) {
 		ok, err := authorize(ctx, existingIntake)
 		if err != nil {

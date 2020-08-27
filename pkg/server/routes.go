@@ -1,8 +1,10 @@
 package server
 
 import (
+	"context"
 	"net/http"
 
+	"github.com/google/uuid"
 	_ "github.com/lib/pq" // pq is required to get the postgres driver into sqlx
 	"go.uber.org/zap"
 
@@ -12,6 +14,7 @@ import (
 	"github.com/cmsgov/easi-app/pkg/email"
 	"github.com/cmsgov/easi-app/pkg/handlers"
 	"github.com/cmsgov/easi-app/pkg/local"
+	"github.com/cmsgov/easi-app/pkg/models"
 	"github.com/cmsgov/easi-app/pkg/services"
 	"github.com/cmsgov/easi-app/pkg/storage"
 )
@@ -106,53 +109,53 @@ func (s *Server) routes(
 	)
 	api.Handle("/systems", systemHandler.Handle())
 
-	systemIntakeHandler := handlers.NewSystemIntakeHandler(
+	stateMachineBuilder := newBuildSystemIntakeHandlerFromTransitions(
 		base,
-		services.NewCreateSystemIntake(
-			serviceConfig,
-			store.CreateSystemIntake,
-		),
-		services.NewUpdateSystemIntake(
-			store.FetchSystemIntakeByID,
-			!s.environment.Prod(),
-			services.NewUpdateDRAFTSystemIntake(
-				serviceConfig,
-				services.NewAuthorizeUserIsIntakeRequester(s.logger),
-				store.UpdateSystemIntake,
-			),
-			services.NewSubmitSystemIntake(
-				serviceConfig,
-				services.NewAuthorizeUserIsIntakeRequester(s.logger),
-				store.UpdateSystemIntake,
-				cedarEasiClient.ValidateAndSubmitSystemIntake,
-				emailClient.SendSystemIntakeSubmissionEmail,
-			),
-			services.NewDecideSystemIntake(
-				serviceConfig,
-				services.NewAuthorizeUserIsGRT(),
-				cedarLdapClient.FetchUserEmailAddress,
-				store.UpdateSystemIntake,
-				emailClient.SendSystemIntakeReviewEmail,
-			),
-			services.NewDecideSystemIntake(
-				serviceConfig,
-				services.NewAuthorizeUserIsGRT(),
-				cedarLdapClient.FetchUserEmailAddress,
-				store.UpdateSystemIntake,
-				emailClient.SendSystemIntakeReviewEmail,
-			),
-			services.NewDecideSystemIntake(
-				serviceConfig,
-				services.NewAuthorizeUserIsGRT(),
-				cedarLdapClient.FetchUserEmailAddress,
-				store.UpdateSystemIntake,
-				emailClient.SendSystemIntakeReviewEmail,
-			),
-		),
 		services.NewFetchSystemIntakeByID(
 			serviceConfig,
 			store.FetchSystemIntakeByID,
 			services.NewAuthorizeFetchSystemIntakeByID(),
+		),
+		s,
+	)
+
+	systemIntakeHandler := stateMachineBuilder(
+		services.NewCreateSystemIntake(
+			serviceConfig,
+			store.CreateSystemIntake,
+		),
+		services.NewUpdateDRAFTSystemIntake(
+			serviceConfig,
+			services.NewAuthorizeUserIsIntakeRequester(s.logger),
+			store.UpdateSystemIntake,
+		),
+		services.NewSubmitSystemIntake(
+			serviceConfig,
+			services.NewAuthorizeUserIsIntakeRequester(s.logger),
+			store.UpdateSystemIntake,
+			cedarEasiClient.ValidateAndSubmitSystemIntake,
+			emailClient.SendSystemIntakeSubmissionEmail,
+		),
+		services.NewDecideSystemIntake(
+			serviceConfig,
+			services.NewAuthorizeUserIsGRT(),
+			cedarLdapClient.FetchUserEmailAddress,
+			store.UpdateSystemIntake,
+			emailClient.SendSystemIntakeReviewEmail,
+		),
+		services.NewDecideSystemIntake(
+			serviceConfig,
+			services.NewAuthorizeUserIsGRT(),
+			cedarLdapClient.FetchUserEmailAddress,
+			store.UpdateSystemIntake,
+			emailClient.SendSystemIntakeReviewEmail,
+		),
+		services.NewDecideSystemIntake(
+			serviceConfig,
+			services.NewAuthorizeUserIsGRT(),
+			cedarLdapClient.FetchUserEmailAddress,
+			store.UpdateSystemIntake,
+			emailClient.SendSystemIntakeReviewEmail,
 		),
 		services.NewArchiveSystemIntake(
 			serviceConfig,
@@ -222,4 +225,44 @@ func (s *Server) routes(
 	s.router.PathPrefix("/").Handler(handlers.NewCatchAllHandler(
 		base,
 	).Handle())
+}
+
+func newBuildSystemIntakeHandlerFromTransitions(
+	base handlers.HandlerBase,
+	fetch func(c context.Context, id uuid.UUID) (*models.SystemIntake, error),
+	s *Server,
+) func(
+	createTransition func(context.Context, *models.SystemIntake) (*models.SystemIntake, error),
+	updateDraftTransition services.UpdateIntakeTransition,
+	submitTransition services.UpdateIntakeTransition,
+	decideAcceptedTransition services.UpdateIntakeTransition,
+	decideApprovedTransition services.UpdateIntakeTransition,
+	decideClosedTransition services.UpdateIntakeTransition,
+	deleteTransition func(context.Context, uuid.UUID) error,
+) handlers.SystemIntakeHandler {
+	return func(
+		createTransition func(context.Context, *models.SystemIntake) (*models.SystemIntake, error),
+		updateDraftTransition services.UpdateIntakeTransition,
+		submitTransition services.UpdateIntakeTransition,
+		decideAcceptedTransition services.UpdateIntakeTransition,
+		decideApprovedTransition services.UpdateIntakeTransition,
+		decideClosedTransition services.UpdateIntakeTransition,
+		deleteTransition func(context.Context, uuid.UUID) error,
+	) handlers.SystemIntakeHandler {
+		return handlers.NewSystemIntakeHandler(
+			base,
+			createTransition,
+			services.NewUpdateSystemIntake(
+				fetch,
+				!s.environment.Prod(),
+				updateDraftTransition,
+				submitTransition,
+				decideAcceptedTransition,
+				decideApprovedTransition,
+				decideClosedTransition,
+			),
+			fetch,
+			deleteTransition,
+		)
+	}
 }
