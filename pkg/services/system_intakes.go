@@ -13,11 +13,14 @@ import (
 	"github.com/cmsgov/easi-app/pkg/models"
 )
 
+// CreateIntakeTransition is a type for create transition function
+type CreateIntakeTransition func(context.Context, *models.SystemIntake) (*models.SystemIntake, error)
+
 // UpdateIntakeTransition is a type for update transition function
 type UpdateIntakeTransition func(context.Context, *models.SystemIntake, *models.SystemIntake) (*models.SystemIntake, error)
 
 // DeleteIntakeTransition is a type for archive transition function
-type DeleteIntakeTransition func(context.Context, *uuid.UUID) error
+type DeleteIntakeTransition func(context.Context, uuid.UUID) error
 
 // NewAuthorizeFetchSystemIntakesByEuaID is a service to authorize FetchSystemIntakesByEuaID
 func NewAuthorizeFetchSystemIntakesByEuaID() func(ctx context.Context, euaID string) (bool, error) {
@@ -55,11 +58,18 @@ func NewFetchSystemIntakesByEuaID(
 	}
 }
 
+// NewCreateSystemIntakeWrapper wraps CreateIntakeTransition for type reasons
+func NewCreateSystemIntakeWrapper(create CreateIntakeTransition) func(context.Context, *models.SystemIntake) (*models.SystemIntake, error) {
+	return func(ctx context.Context, intake *models.SystemIntake) (*models.SystemIntake, error) {
+		return create(ctx, intake)
+	}
+}
+
 // NewCreateSystemIntake is a service to create a business case
 func NewCreateSystemIntake(
 	config Config,
 	create func(c context.Context, intake *models.SystemIntake) (*models.SystemIntake, error),
-) func(context.Context, *models.SystemIntake) (*models.SystemIntake, error) {
+) CreateIntakeTransition {
 	return func(ctx context.Context, intake *models.SystemIntake) (*models.SystemIntake, error) {
 		logger := appcontext.ZLogger(ctx)
 		principal := appcontext.Principal(ctx)
@@ -108,11 +118,7 @@ func determineState(existingStatus, newStatus models.SystemIntakeStatus) int {
 func NewUpdateSystemIntake(
 	fetch func(c context.Context, id uuid.UUID) (*models.SystemIntake, error),
 	canDecideIntake bool,
-	updateDRAFTIntake UpdateIntakeTransition,
-	submitIntake UpdateIntakeTransition,
-	decideIntakeACCEPTED UpdateIntakeTransition,
-	decideIntakeAPPROVED UpdateIntakeTransition,
-	decideIntakeCLOSED UpdateIntakeTransition,
+	transitions StateMachineTransitions,
 ) func(c context.Context, i *models.SystemIntake) (*models.SystemIntake, error) {
 	return func(ctx context.Context, intake *models.SystemIntake) (*models.SystemIntake, error) {
 		existingIntake, fetchErr := fetch(ctx, intake.ID)
@@ -127,15 +133,15 @@ func NewUpdateSystemIntake(
 		transition := determineState(existingIntake.Status, intake.Status)
 		switch transition {
 		case models.EditDraftIntake:
-			return updateDRAFTIntake(ctx, existingIntake, intake)
+			return transitions.UpdateDraft(ctx, existingIntake, intake)
 		case models.SubmitIntake:
-			return submitIntake(ctx, existingIntake, intake)
+			return transitions.Submit(ctx, existingIntake, intake)
 		case models.DecideIntakeAccepted:
-			return decideIntakeACCEPTED(ctx, existingIntake, intake)
+			return transitions.Accept(ctx, existingIntake, intake)
 		case models.DecideIntakeApproved:
-			return decideIntakeAPPROVED(ctx, existingIntake, intake)
+			return transitions.Approve(ctx, existingIntake, intake)
 		case models.DecideIntakeClosed:
-			return decideIntakeCLOSED(ctx, existingIntake, intake)
+			return transitions.Close(ctx, existingIntake, intake)
 		default:
 			return &models.SystemIntake{}, &apperrors.ResourceConflictError{
 				Err:        errors.New("invalid intake status change"),
@@ -334,6 +340,13 @@ func NewAuthorizeUserIsGRT() func(context.Context, *models.SystemIntake) (bool, 
 	}
 }
 
+// NewArchiveSystemIntakeWrapper wraps DeleteIntakeTransition for type reasons
+func NewArchiveSystemIntakeWrapper(archiveTransition DeleteIntakeTransition) func(context.Context, uuid.UUID) error {
+	return func(ctx context.Context, id uuid.UUID) error {
+		return archiveTransition(ctx, id)
+	}
+}
+
 // NewArchiveSystemIntake is a service to archive a system intake
 func NewArchiveSystemIntake(
 	config Config,
@@ -341,7 +354,7 @@ func NewArchiveSystemIntake(
 	update func(c context.Context, intake *models.SystemIntake) (*models.SystemIntake, error),
 	archiveBusinessCase func(context.Context, uuid.UUID) error,
 	authorize func(context context.Context, intake *models.SystemIntake) (bool, error),
-) func(context.Context, uuid.UUID) error {
+) DeleteIntakeTransition {
 	return func(ctx context.Context, id uuid.UUID) error {
 		intake, fetchErr := fetch(ctx, id)
 		if fetchErr != nil {

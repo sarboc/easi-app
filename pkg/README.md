@@ -46,11 +46,13 @@ to our application models.
 They follow the Go `http.Handler` standard pattern.
 They should do minimal work to handle a request
 and offload business logic to the `services` package.
+Each handler should call a single `services` method which will
+carry out relevant business logic.
 
 A common handler pattern is:
 
 1. Unmarshal a request from JSON
-2. Offload an operation to the `services` package
+2. Offload an operation to the `services` package.
 3. Generate a response based on the return value from `services`
 
 ## Integration: `integration`
