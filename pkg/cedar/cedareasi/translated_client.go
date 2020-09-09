@@ -71,6 +71,9 @@ func ValidateSystemIntakeForCedar(intake *models.SystemIntake, logger *zap.Logge
 	if validate.RequireString(intake.EUAUserID) {
 		expectedError.WithValidation("EUAUserID", validationMessage)
 	}
+	if validate.RequireString(string(intake.Status)) {
+		expectedError.WithValidation("Status", validationMessage)
+	}
 	if validate.RequireString(intake.Requester) {
 		expectedError.WithValidation("Requester", validationMessage)
 	}
@@ -130,7 +133,8 @@ func ValidateSystemIntakeForCedar(intake *models.SystemIntake, logger *zap.Logge
 func submitSystemIntake(validatedIntake *models.SystemIntake, c TranslatedClient, logger *zap.Logger) (string, error) {
 	id := validatedIntake.ID.String()
 	submissionTime := validatedIntake.SubmittedAt.String()
-	params := apioperations.NewIntakegovernancePOST4Params()
+	statusAsString := string(validatedIntake.Status)
+	params := apioperations.NewIntakegovernancePOST5Params()
 	governanceIntake := apimodels.GovernanceIntake{
 		BusinessNeeds:           &validatedIntake.BusinessNeed.String,
 		BusinessOwner:           &validatedIntake.BusinessOwner.String,
@@ -150,6 +154,8 @@ func submitSystemIntake(validatedIntake *models.SystemIntake, c TranslatedClient
 		Requester:               &validatedIntake.Requester,
 		RequesterComponent:      &validatedIntake.Component.String,
 		Solution:                &validatedIntake.Solution.String,
+		Status:                  &statusAsString,
+		SubmittedAt:             &submissionTime,
 		SubmittedTime:           &submissionTime,
 		SystemName:              &validatedIntake.ProjectName.String,
 		TrbCollaborator:         validatedIntake.TRBCollaborator.String,
@@ -160,7 +166,7 @@ func submitSystemIntake(validatedIntake *models.SystemIntake, c TranslatedClient
 	params.Body = &apimodels.Intake{
 		Governance: governanceConversion,
 	}
-	resp, err := c.client.Operations.IntakegovernancePOST4(params, c.apiAuthHeader)
+	resp, err := c.client.Operations.IntakegovernancePOST5(params, c.apiAuthHeader)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to submit intake for CEDAR with error: %v", err))
 		return "", &apperrors.ExternalAPIError{

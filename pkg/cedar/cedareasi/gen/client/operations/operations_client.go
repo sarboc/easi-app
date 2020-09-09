@@ -27,23 +27,163 @@ type Client struct {
 }
 
 /*
-IntakegovernancePOST4 intakegovernance p o s t 4 API
+HealthCheckGET4 health check g e t 4 API
 */
-func (a *Client) IntakegovernancePOST4(params *IntakegovernancePOST4Params, authInfo runtime.ClientAuthInfoWriter) (*IntakegovernancePOST4OK, error) {
+func (a *Client) HealthCheckGET4(params *HealthCheckGET4Params, authInfo runtime.ClientAuthInfoWriter) (*HealthCheckGET4OK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewIntakegovernancePOST4Params()
+		params = NewHealthCheckGET4Params()
 	}
 
 	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "intakegovernance_POST_4",
+		ID:                 "healthCheck_GET_4",
+		Method:             "GET",
+		PathPattern:        "/healthCheck",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &HealthCheckGET4Reader{formats: a.formats},
+		AuthInfo:           authInfo,
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	})
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*HealthCheckGET4OK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for healthCheck_GET_4: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+IntakebusinessCasePOST7 intakebusiness case p o s t 7 API
+*/
+func (a *Client) IntakebusinessCasePOST7(params *IntakebusinessCasePOST7Params, authInfo runtime.ClientAuthInfoWriter) (*IntakebusinessCasePOST7OK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewIntakebusinessCasePOST7Params()
+	}
+
+	result, err := a.transport.Submit(&runtime.ClientOperation{
+		ID:                 "intakebusinessCase_POST_7",
+		Method:             "POST",
+		PathPattern:        "/intake/businessCase",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &IntakebusinessCasePOST7Reader{formats: a.formats},
+		AuthInfo:           authInfo,
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	})
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*IntakebusinessCasePOST7OK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for intakebusinessCase_POST_7: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+IntakebusinessCaseidGET8 intakebusiness caseid g e t 8 API
+*/
+func (a *Client) IntakebusinessCaseidGET8(params *IntakebusinessCaseidGET8Params, authInfo runtime.ClientAuthInfoWriter) (*IntakebusinessCaseidGET8OK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewIntakebusinessCaseidGET8Params()
+	}
+
+	result, err := a.transport.Submit(&runtime.ClientOperation{
+		ID:                 "intakebusinessCaseid_GET_8",
+		Method:             "GET",
+		PathPattern:        "/intake/businessCase/{id}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &IntakebusinessCaseidGET8Reader{formats: a.formats},
+		AuthInfo:           authInfo,
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	})
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*IntakebusinessCaseidGET8OK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for intakebusinessCaseid_GET_8: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+IntakebusinessCaseidPUT8 intakebusiness caseid p u t 8 API
+*/
+func (a *Client) IntakebusinessCaseidPUT8(params *IntakebusinessCaseidPUT8Params, authInfo runtime.ClientAuthInfoWriter) (*IntakebusinessCaseidPUT8OK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewIntakebusinessCaseidPUT8Params()
+	}
+
+	result, err := a.transport.Submit(&runtime.ClientOperation{
+		ID:                 "intakebusinessCaseid_PUT_8",
+		Method:             "PUT",
+		PathPattern:        "/intake/businessCase/{id}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &IntakebusinessCaseidPUT8Reader{formats: a.formats},
+		AuthInfo:           authInfo,
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	})
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*IntakebusinessCaseidPUT8OK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for intakebusinessCaseid_PUT_8: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+IntakegovernancePOST5 intakegovernance p o s t 5 API
+*/
+func (a *Client) IntakegovernancePOST5(params *IntakegovernancePOST5Params, authInfo runtime.ClientAuthInfoWriter) (*IntakegovernancePOST5OK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewIntakegovernancePOST5Params()
+	}
+
+	result, err := a.transport.Submit(&runtime.ClientOperation{
+		ID:                 "intakegovernance_POST_5",
 		Method:             "POST",
 		PathPattern:        "/intake/governance",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
 		Schemes:            []string{"http"},
 		Params:             params,
-		Reader:             &IntakegovernancePOST4Reader{formats: a.formats},
+		Reader:             &IntakegovernancePOST5Reader{formats: a.formats},
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
@@ -51,34 +191,34 @@ func (a *Client) IntakegovernancePOST4(params *IntakegovernancePOST4Params, auth
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*IntakegovernancePOST4OK)
+	success, ok := result.(*IntakegovernancePOST5OK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for intakegovernance_POST_4: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for intakegovernance_POST_5: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-IntakegovernanceidGET5 intakegovernanceid g e t 5 API
+IntakegovernanceidGET6 intakegovernanceid g e t 6 API
 */
-func (a *Client) IntakegovernanceidGET5(params *IntakegovernanceidGET5Params, authInfo runtime.ClientAuthInfoWriter) (*IntakegovernanceidGET5OK, error) {
+func (a *Client) IntakegovernanceidGET6(params *IntakegovernanceidGET6Params, authInfo runtime.ClientAuthInfoWriter) (*IntakegovernanceidGET6OK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewIntakegovernanceidGET5Params()
+		params = NewIntakegovernanceidGET6Params()
 	}
 
 	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "intakegovernanceid_GET_5",
+		ID:                 "intakegovernanceid_GET_6",
 		Method:             "GET",
 		PathPattern:        "/intake/governance/{id}",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
 		Schemes:            []string{"http"},
 		Params:             params,
-		Reader:             &IntakegovernanceidGET5Reader{formats: a.formats},
+		Reader:             &IntakegovernanceidGET6Reader{formats: a.formats},
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
@@ -86,13 +226,48 @@ func (a *Client) IntakegovernanceidGET5(params *IntakegovernanceidGET5Params, au
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*IntakegovernanceidGET5OK)
+	success, ok := result.(*IntakegovernanceidGET6OK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for intakegovernanceid_GET_5: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for intakegovernanceid_GET_6: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+IntakegovernanceidPUT6 intakegovernanceid p u t 6 API
+*/
+func (a *Client) IntakegovernanceidPUT6(params *IntakegovernanceidPUT6Params, authInfo runtime.ClientAuthInfoWriter) (*IntakegovernanceidPUT6OK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewIntakegovernanceidPUT6Params()
+	}
+
+	result, err := a.transport.Submit(&runtime.ClientOperation{
+		ID:                 "intakegovernanceid_PUT_6",
+		Method:             "PUT",
+		PathPattern:        "/intake/governance/{id}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &IntakegovernanceidPUT6Reader{formats: a.formats},
+		AuthInfo:           authInfo,
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	})
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*IntakegovernanceidPUT6OK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for intakegovernanceid_PUT_6: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 

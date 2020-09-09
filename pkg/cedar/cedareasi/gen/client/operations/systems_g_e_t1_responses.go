@@ -97,13 +97,25 @@ func NewSystemsGET1BadRequest() *SystemsGET1BadRequest {
 Bad Request
 */
 type SystemsGET1BadRequest struct {
+	Payload *models.SystemsGETResponse
 }
 
 func (o *SystemsGET1BadRequest) Error() string {
-	return fmt.Sprintf("[GET /systems][%d] systemsGET1BadRequest ", 400)
+	return fmt.Sprintf("[GET /systems][%d] systemsGET1BadRequest  %+v", 400, o.Payload)
+}
+
+func (o *SystemsGET1BadRequest) GetPayload() *models.SystemsGETResponse {
+	return o.Payload
 }
 
 func (o *SystemsGET1BadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.SystemsGETResponse)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
 
 	return nil
 }
@@ -118,13 +130,25 @@ func NewSystemsGET1Unauthorized() *SystemsGET1Unauthorized {
 Access Denied
 */
 type SystemsGET1Unauthorized struct {
+	Payload *models.SystemsGETResponse
 }
 
 func (o *SystemsGET1Unauthorized) Error() string {
-	return fmt.Sprintf("[GET /systems][%d] systemsGET1Unauthorized ", 401)
+	return fmt.Sprintf("[GET /systems][%d] systemsGET1Unauthorized  %+v", 401, o.Payload)
+}
+
+func (o *SystemsGET1Unauthorized) GetPayload() *models.SystemsGETResponse {
+	return o.Payload
 }
 
 func (o *SystemsGET1Unauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.SystemsGETResponse)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
 
 	return nil
 }
@@ -139,13 +163,25 @@ func NewSystemsGET1InternalServerError() *SystemsGET1InternalServerError {
 Internal Server Error
 */
 type SystemsGET1InternalServerError struct {
+	Payload *models.SystemsGETResponse
 }
 
 func (o *SystemsGET1InternalServerError) Error() string {
-	return fmt.Sprintf("[GET /systems][%d] systemsGET1InternalServerError ", 500)
+	return fmt.Sprintf("[GET /systems][%d] systemsGET1InternalServerError  %+v", 500, o.Payload)
+}
+
+func (o *SystemsGET1InternalServerError) GetPayload() *models.SystemsGETResponse {
+	return o.Payload
 }
 
 func (o *SystemsGET1InternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.SystemsGETResponse)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
 
 	return nil
 }

@@ -97,13 +97,25 @@ func NewSystemsidGET2BadRequest() *SystemsidGET2BadRequest {
 Bad Request
 */
 type SystemsidGET2BadRequest struct {
+	Payload *models.SystemsidGETResponse
 }
 
 func (o *SystemsidGET2BadRequest) Error() string {
-	return fmt.Sprintf("[GET /systems/{id}][%d] systemsidGET2BadRequest ", 400)
+	return fmt.Sprintf("[GET /systems/{id}][%d] systemsidGET2BadRequest  %+v", 400, o.Payload)
+}
+
+func (o *SystemsidGET2BadRequest) GetPayload() *models.SystemsidGETResponse {
+	return o.Payload
 }
 
 func (o *SystemsidGET2BadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.SystemsidGETResponse)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
 
 	return nil
 }
@@ -118,13 +130,25 @@ func NewSystemsidGET2Unauthorized() *SystemsidGET2Unauthorized {
 Access Denied
 */
 type SystemsidGET2Unauthorized struct {
+	Payload *models.SystemsidGETResponse
 }
 
 func (o *SystemsidGET2Unauthorized) Error() string {
-	return fmt.Sprintf("[GET /systems/{id}][%d] systemsidGET2Unauthorized ", 401)
+	return fmt.Sprintf("[GET /systems/{id}][%d] systemsidGET2Unauthorized  %+v", 401, o.Payload)
+}
+
+func (o *SystemsidGET2Unauthorized) GetPayload() *models.SystemsidGETResponse {
+	return o.Payload
 }
 
 func (o *SystemsidGET2Unauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.SystemsidGETResponse)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
 
 	return nil
 }
