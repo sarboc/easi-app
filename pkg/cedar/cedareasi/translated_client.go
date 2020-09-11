@@ -199,3 +199,21 @@ func (c TranslatedClient) ValidateAndSubmitSystemIntake(intake *models.SystemInt
 	}
 	return submitSystemIntake(intake, c, logger)
 }
+
+// ValidateBusinessCaseForCedar validates all required fields to ensure we won't get errors for contents of the request
+func (c TranslatedClient) ValidateBusinessCaseForCedar(businessCase *models.BusinessCase) error {
+	expectedError := apperrors.ValidationError{
+		Err:         errors.New("validation failed"),
+		Validations: apperrors.Validations{},
+		ModelID:     businessCase.ID.String(),
+		Model:       businessCase,
+	}
+	const validationMessage = "is required"
+	if validate.RequireNullString(businessCase.BusinessOwner) {
+		expectedError.WithValidation("BusinessOwner", validationMessage)
+	}
+	if len(expectedError.Validations) > 0 {
+		return &expectedError
+	}
+	return nil
+}
