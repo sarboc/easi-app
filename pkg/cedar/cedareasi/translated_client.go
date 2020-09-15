@@ -209,9 +209,48 @@ func (c TranslatedClient) ValidateBusinessCaseForCedar(businessCase *models.Busi
 		Model:       businessCase,
 	}
 	const validationMessage = "is required"
+	if validate.RequireNullString(businessCase.BusinessNeed) {
+		expectedError.WithValidation("BusinessNeed", validationMessage)
+	}
 	if validate.RequireNullString(businessCase.BusinessOwner) {
 		expectedError.WithValidation("BusinessOwner", validationMessage)
 	}
+	if validate.RequireNullString(businessCase.CMSBenefit) {
+		expectedError.WithValidation("CMSBenefit", validationMessage)
+	}
+	// ToDo: decided_at is required in the swagger. Should it be?
+	if validate.RequireString(businessCase.EUAUserID) {
+		expectedError.WithValidation("EUAUserID", validationMessage)
+	}
+	// ToDo: hosting_needs is required in swagger. What field is that?
+	if validate.RequireUUID(businessCase.ID) {
+		expectedError.WithValidation("ID", validationMessage)
+	}
+	// ToDo: lifecycle_id is required in swagger. Should it be?
+	if validate.RequireNullString(businessCase.ProjectName) {
+		expectedError.WithValidation("ProjectName", validationMessage)
+	}
+	if validate.RequireNullString(businessCase.Requester) {
+		expectedError.WithValidation("Requester", validationMessage)
+	}
+	if validate.RequireNullString(businessCase.ProjectName) {
+		expectedError.WithValidation("ProjectName", validationMessage)
+	}
+	if validate.RequireNullString(businessCase.RequesterPhoneNumber) {
+		expectedError.WithValidation("RequesterPhoneNumber", validationMessage)
+	}
+	// ToDo: validate solutions
+	if validate.RequireString(string(businessCase.Status)) {
+		expectedError.WithValidation("Status", validationMessage)
+	}
+	if validate.RequireTime(*businessCase.SubmittedAt) {
+		expectedError.WithValidation("SubmittedAt", validationMessage)
+	}
+	if validate.RequireNullString(businessCase.SuccessIndicators) {
+		expectedError.WithValidation("SuccessIndicators", validationMessage)
+	}
+	// ToDo: user_interface is required in swagger. What is that?
+	// ToDo: withdrawn_at is required in swagger. Should it be?
 	if len(expectedError.Validations) > 0 {
 		return &expectedError
 	}
