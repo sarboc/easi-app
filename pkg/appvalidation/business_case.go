@@ -80,7 +80,8 @@ func BusinessCaseForUpdate(businessCase *models.BusinessCase) error {
 	return nil
 }
 
-func alternativeBRequired(businessCase *models.BusinessCase) bool {
+// IsAlternativeBPresent decides if there is an Alternative B filled out for the business case
+func IsAlternativeBPresent(businessCase *models.BusinessCase) bool {
 	return businessCase.AlternativeBTitle.Valid ||
 		businessCase.AlternativeBSummary.Valid ||
 		businessCase.AlternativeBAcquisitionApproach.Valid ||
@@ -166,7 +167,7 @@ func validateAllRequiredLifecycleCosts(businessCase *models.BusinessCase) map[st
 	if v := validateRequiredCost(aCosts); v != "" {
 		validations["alternativeASolution"] = v
 	}
-	if alternativeBRequired(businessCase) {
+	if IsAlternativeBPresent(businessCase) {
 		if v := validateRequiredCost(bCosts); v != "" {
 			validations["alternativeBSolution"] = v
 		}
@@ -294,7 +295,7 @@ func BusinessCaseForSubmit(businessCase *models.BusinessCase, existingBusinessCa
 		if businessCase.LastSubmittedAt != nil && validate.RequireTime(*businessCase.LastSubmittedAt) {
 			expectedErr.WithValidation("LastSubmittedAt", "cannot be zero")
 		}
-		if alternativeBRequired(businessCase) {
+		if IsAlternativeBPresent(businessCase) {
 			if validate.RequireNullString(businessCase.AlternativeBTitle) {
 				expectedErr.WithValidation("AlternativeBTitle", "is required")
 			}

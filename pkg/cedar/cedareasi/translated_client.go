@@ -10,6 +10,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/cmsgov/easi-app/pkg/apperrors"
+	"github.com/cmsgov/easi-app/pkg/appvalidation"
 	apiclient "github.com/cmsgov/easi-app/pkg/cedar/cedareasi/gen/client"
 	apioperations "github.com/cmsgov/easi-app/pkg/cedar/cedareasi/gen/client/operations"
 	apimodels "github.com/cmsgov/easi-app/pkg/cedar/cedareasi/gen/models"
@@ -239,18 +240,67 @@ func (c TranslatedClient) ValidateBusinessCaseForCedar(businessCase *models.Busi
 	if validate.RequireNullString(businessCase.RequesterPhoneNumber) {
 		expectedError.WithValidation("RequesterPhoneNumber", validationMessage)
 	}
-	// ToDo: validate solutions
 	if validate.RequireString(string(businessCase.Status)) {
 		expectedError.WithValidation("Status", validationMessage)
 	}
-	if validate.RequireTime(*businessCase.SubmittedAt) {
-		expectedError.WithValidation("SubmittedAt", validationMessage)
+	if validate.RequireTime(*businessCase.InitialSubmittedAt) {
+		expectedError.WithValidation("InitialSubmittedAt", validationMessage)
 	}
 	if validate.RequireNullString(businessCase.SuccessIndicators) {
 		expectedError.WithValidation("SuccessIndicators", validationMessage)
 	}
 	// ToDo: user_interface is required in swagger. What is that?
 	// ToDo: withdrawn_at is required in swagger. Should it be?
+	if validate.RequireNullString(businessCase.AsIsTitle) {
+		expectedError.WithValidation("AsIsTitle", validationMessage)
+	}
+	if validate.RequireNullString(businessCase.AsIsSummary) {
+		expectedError.WithValidation("AsIsSummary", validationMessage)
+	}
+	if validate.RequireNullString(businessCase.AsIsPros) {
+		expectedError.WithValidation("AsIsPros", validationMessage)
+	}
+	if validate.RequireNullString(businessCase.AsIsCons) {
+		expectedError.WithValidation("AsIsCons", validationMessage)
+	}
+	if validate.RequireNullString(businessCase.PreferredTitle) {
+		expectedError.WithValidation("PreferredTitle", validationMessage)
+	}
+	if validate.RequireNullString(businessCase.PreferredSummary) {
+		expectedError.WithValidation("PreferredSummary", validationMessage)
+	}
+	if validate.RequireNullString(businessCase.PreferredPros) {
+		expectedError.WithValidation("PreferredPros", validationMessage)
+	}
+	if validate.RequireNullString(businessCase.PreferredCons) {
+		expectedError.WithValidation("PreferredCons", validationMessage)
+	}
+	if validate.RequireNullString(businessCase.AlternativeATitle) {
+		expectedError.WithValidation("AlternativeATitle", validationMessage)
+	}
+	if validate.RequireNullString(businessCase.AlternativeASummary) {
+		expectedError.WithValidation("AlternativeASummary", validationMessage)
+	}
+	if validate.RequireNullString(businessCase.AlternativeAPros) {
+		expectedError.WithValidation("AlternativeAPros", validationMessage)
+	}
+	if validate.RequireNullString(businessCase.AlternativeACons) {
+		expectedError.WithValidation("AlternativeACons", validationMessage)
+	}
+	if appvalidation.IsAlternativeBPresent(businessCase) {
+		if validate.RequireNullString(businessCase.AlternativeBTitle) {
+			expectedError.WithValidation("AlternativeBTitle", validationMessage)
+		}
+		if validate.RequireNullString(businessCase.AlternativeBSummary) {
+			expectedError.WithValidation("AlternativeBSummary", validationMessage)
+		}
+		if validate.RequireNullString(businessCase.AlternativeBPros) {
+			expectedError.WithValidation("AlternativeBPros", validationMessage)
+		}
+		if validate.RequireNullString(businessCase.AlternativeBCons) {
+			expectedError.WithValidation("AlternativeBCons", validationMessage)
+		}
+	}
 	if len(expectedError.Validations) > 0 {
 		return &expectedError
 	}
