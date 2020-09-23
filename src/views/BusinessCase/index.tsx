@@ -61,6 +61,8 @@ export const BusinessCase = () => {
   const error = useSelector((state: AppState) => state.businessCase.error);
   const prevIsSubmitting = usePrevious(isSubmitting);
 
+  const testFoo = "hope CI fails because I'm not using this variable!";
+
   const dispatchSave = () => {
     const { current }: { current: FormikProps<BusinessCaseModel> } = formikRef;
     if (current && current.dirty && !isSaving) {
