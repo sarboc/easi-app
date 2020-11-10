@@ -53,6 +53,7 @@ func (c TranslatedClient) FetchUserInfo(ctx context.Context, euaID string) (*mod
 			Source:    "CEDAR LDAP",
 		}
 	}
+	fmt.Println(resp.Payload)
 	if resp.Payload == nil || resp.Payload.UserName == "" {
 		return nil, &apperrors.ExternalAPIError{
 			Err:       errors.New("failed to return person from CEDAR LDAP"),
