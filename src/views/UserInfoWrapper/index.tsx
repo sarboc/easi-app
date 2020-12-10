@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
+import { useHistory, useLocation } from 'react-router-dom';
 import { useOktaAuth } from '@okta/okta-react';
 
 import { setUser } from 'reducers/authReducer';
@@ -10,6 +11,7 @@ type UserInfoWrapperProps = {
 
 const UserInfoWrapper = ({ children }: UserInfoWrapperProps) => {
   const dispatch = useDispatch();
+  const history = useHistory();
   const { authState, authService } = useOktaAuth();
 
   const storeUserInfo = async () => {
@@ -47,6 +49,25 @@ const UserInfoWrapper = ({ children }: UserInfoWrapperProps) => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authState.isAuthenticated]);
+
+  const redirectUrl = new URLSearchParams(useLocation().search).get('redirect');
+  useEffect(() => {
+    if (redirectUrl) {
+      localStorage.setItem('redirect', redirectUrl);
+    }
+  }, [redirectUrl]);
+
+  // const { name } = useSelector((state: any) => state.auth);
+
+  useEffect(() => {
+    if (authState.isAuthenticated) {
+      const localStorageRedirect = localStorage.getItem('redirect');
+      if (localStorageRedirect) {
+        history.push(localStorageRedirect);
+        localStorage.removeItem('redirect');
+      }
+    }
+  }, [authState.isAuthenticated, history]);
 
   return <>{children}</>;
 };
