@@ -171,8 +171,8 @@ func systemIntakeToGovernanceIntake(si *models.SystemIntake) *apimodels.Governan
 		ExistingFunding:         si.ExistingFunding.ValueOrZero(),
 		FundingSource:           si.FundingSource.ValueOrZero(),
 		ID:                      &id,
-		Isso:                    si.ISSO.ValueOrZero(),
-		OitSecurityCollaborator: si.OITSecurityCollaborator.ValueOrZero(),
+		Isso:                    si.ISSOName.ValueOrZero(),
+		OitSecurityCollaborator: si.OITSecurityCollaboratorName.ValueOrZero(),
 		ProcessStatus:           si.ProcessStatus.ValueOrZero(),
 		ProductManager:          si.ProductManager.ValueOrZero(),
 		ProductManagerComponent: si.ProductManagerComponent.ValueOrZero(),
@@ -180,7 +180,7 @@ func systemIntakeToGovernanceIntake(si *models.SystemIntake) *apimodels.Governan
 		RequesterComponent:      si.Component.ValueOrZero(),
 		Solution:                si.Solution.ValueOrZero(),
 		SystemName:              si.ProjectName.ValueOrZero(),
-		TrbCollaborator:         si.TRBCollaborator.ValueOrZero(),
+		TrbCollaborator:         si.TRBCollaboratorName.ValueOrZero(),
 	}
 	if si.SubmittedAt != nil {
 		gi.SubmittedAt = si.SubmittedAt.Format(dateTimeLayout)

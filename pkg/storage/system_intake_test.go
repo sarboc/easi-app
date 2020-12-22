@@ -92,11 +92,11 @@ func (s StoreTestSuite) TestUpdateSystemIntake() {
 		now := time.Now()
 
 		intake.UpdatedAt = &now
-		intake.ISSO = null.StringFrom("test isso")
+		intake.ISSOName = null.StringFrom("test isso")
 
 		updated, err := s.store.UpdateSystemIntake(ctx, intake)
 		s.NoError(err, "failed to update system intake")
-		s.Equal(intake.ISSO, updated.ISSO)
+		s.Equal(intake.ISSOName, updated.ISSOName)
 	})
 
 	s.Run("EUA ID will not update", func() {

@@ -340,7 +340,7 @@ func NewUpdateLifecycleFields(
 			updated.LifecycleID.String,
 			updated.LifecycleExpiresAt,
 			updated.LifecycleScope.String,
-			updated.LifecycleNextSteps.String,
+			updated.DecisionNextSteps.String,
 			action.Feedback.String)
 		if err != nil {
 			return nil, err

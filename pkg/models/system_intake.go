@@ -86,11 +86,8 @@ type SystemIntake struct {
 	BusinessOwnerComponent      null.String             `json:"businessOwnerComponent" db:"business_owner_component"`
 	ProductManager              null.String             `json:"productManager" db:"product_manager"`
 	ProductManagerComponent     null.String             `json:"productManagerComponent" db:"product_manager_component"`
-	ISSO                        null.String             `json:"isso"`
 	ISSOName                    null.String             `json:"issoName" db:"isso_name"`
-	TRBCollaborator             null.String             `json:"trbCollaborator" db:"trb_collaborator"`
 	TRBCollaboratorName         null.String             `json:"trbCollaboratorName" db:"trb_collaborator_name"`
-	OITSecurityCollaborator     null.String             `json:"oitSecurityCollaborator" db:"oit_security_collaborator"`
 	OITSecurityCollaboratorName null.String             `json:"oitSecurityCollaboratorName" db:"oit_security_collaborator_name"`
 	EACollaborator              null.String             `json:"eaCollaborator" db:"ea_collaborator"`
 	EACollaboratorName          null.String             `json:"eaCollaboratorName" db:"ea_collaborator_name"`
@@ -126,7 +123,6 @@ type SystemIntake struct {
 	LifecycleID                 null.String             `json:"lcid" db:"lcid"`
 	LifecycleExpiresAt          *time.Time              `json:"lcidExpiresAt" db:"lcid_expires_at"`
 	LifecycleScope              null.String             `json:"lcidScope" db:"lcid_scope"`
-	LifecycleNextSteps          null.String             `json:"lifecycleNextSteps" db:"lcid_next_steps"`
 	DecisionNextSteps           null.String             `json:"decisionNextSteps" db:"decision_next_steps"`
 	RejectionReason             null.String             `json:"rejectionReason" db:"rejection_reason"`
 }
