@@ -1,4 +1,4 @@
-# CMS EASi Application
+# Fork of CMS EASi Application to maybe try Rails
 
 This repository contains the application code
 for the CMS EASi (Easy Access to System Information).
